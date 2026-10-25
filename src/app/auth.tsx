@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Body, Button, Field, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { requireSupabase } from '@/lib/supabase';
 
 export default function AuthScreen() {
   const { role = 'customer' } = useLocalSearchParams<{ role?: string }>();
@@ -20,10 +21,17 @@ export default function AuthScreen() {
         <Field label="Email address" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="name@example.com" />
         <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Enter your password" />
         <Pressable><Text style={styles.forgot}>Forgot password?</Text></Pressable>
-        <Button onPress={() => router.replace(isFarmer ? '/farmer' : '/customer')}>Sign in</Button>
+        <Button onPress={async () => {
+          const result = await requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
+          if (result.error) {
+            Alert.alert('Sign in failed', result.error.message);
+            return;
+          }
+          router.replace(isFarmer ? '/farmer' : '/customer');
+        }}>Sign in</Button>
       </View>
       <View style={styles.switch}><Text style={styles.switchText}>Don’t have an account?</Text><Pressable onPress={() => router.push(`/register?role=${role}`)}><Text style={styles.link}> Create an account</Text></Pressable></View>
-      <Text style={styles.demo}>Demo mode is enabled. You can explore the marketplace without an account.</Text>
+      <Text style={styles.demo}>Sign in to access your account and manage marketplace activity.</Text>
     </Screen>
   );
 }

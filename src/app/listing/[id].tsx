@@ -10,6 +10,9 @@ export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { listings } = useAppStore();
   const listing = listings.find((item) => item.id === id) ?? listings[0];
+  if (!listing) {
+    return <Screen><Text style={styles.location}>This listing is no longer available.</Text></Screen>;
+  }
   return (
     <Screen>
       <View style={styles.top}><Pressable onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" size={21} color={Colors.green} /></Pressable><Text style={styles.topTitle}>Listing details</Text><Text style={styles.share}>↗</Text></View>
