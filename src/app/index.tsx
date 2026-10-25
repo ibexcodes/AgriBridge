@@ -1,49 +1,118 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { images } from '@/lib/demo-data';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
+const slides = [
+  {
+    image: require('@/assets/agribridge/onboarding-produce.jpg'),
+    title: 'Fresh Produce, Easy\nShopping',
+    body: 'Shop fresh fruits, vegetables, and other food products from suppliers across Botswana, all in one convenient marketplace.',
+  },
+  {
+    image: require('@/assets/agribridge/onboarding-fertilizer.jpg'),
+    title: 'Give Your Crops a\nStrong Start',
+    body: 'Explore fertilizers to support soil health and crop health, helping you choose products suited to your farming needs.',
+  },
+  {
+    image: require('@/assets/agribridge/onboarding-machinery.jpg'),
+    title: 'Everything Your Farm\nNeeds',
+    body: 'Discover tractors, farming machinery, tools, and essential equipment to help prepare land, tend crops, and work more efficiently.',
+  },
+];
+
 export default function WelcomeScreen() {
-  return (
-    <View style={styles.background}>
-      <Image source={images.hero} style={styles.backgroundImage} resizeMode="cover" />
-      <StatusBar style="light" />
-      <View style={styles.overlay} />
-      <View style={styles.content}>
-        <View style={styles.topRow}>
-          <View style={styles.logoMark}><Text style={styles.leaf}>⌁</Text></View>
-          <Pressable onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
+  const [showSplash, setShowSplash] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const listRef = useRef<FlatList<(typeof slides)[number]>>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <View style={styles.splash}>
+        <Image source={require('@/assets/agribridge/logo.png')} style={styles.logo} resizeMode="contain" />
+        <View style={styles.splashDots}>
+          <View style={styles.splashDot} /><View style={[styles.splashDot, styles.splashDotActive]} /><View style={styles.splashDot} />
         </View>
-        <View style={styles.copy}>
-          <View style={styles.progress}><View style={styles.progressActive} /><View style={styles.dot} /><View style={styles.dot} /></View>
-          <Text style={styles.title}>Fresh produce.{'\n'}Real connection.</Text>
-          <Text style={styles.body}>A simple marketplace for farmers and buyers across Botswana.</Text>
-        </View>
-        <Pressable style={styles.button} onPress={() => router.push('/role')}>
-          <Text style={styles.buttonText}>Get started  →</Text>
-        </Pressable>
       </View>
+    );
+  }
+
+  const goToSlide = (index: number) => {
+    listRef.current?.scrollToIndex({ index, animated: true });
+    setActiveIndex(index);
+  };
+
+  return (
+    <View style={styles.screen}>
+      <StatusBar style="light" />
+      <FlatList
+        ref={listRef}
+        data={slides}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(_, index) => String(index)}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <Image source={item.image} style={styles.image} resizeMode="cover" />
+            <View style={styles.scrim} />
+            <View style={styles.slideContent}>
+              <View style={styles.topRow}>
+                {activeIndex > 0 ? <Pressable onPress={() => goToSlide(activeIndex - 1)} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.backPlaceholder} />}
+                <Pressable onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
+              </View>
+              <View style={styles.copy}>
+                <View style={styles.progress}>
+                  {slides.map((_, index) => <View key={index} style={[styles.dot, index === activeIndex && styles.activeDot]} />)}
+                </View>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.body}>{item.body}</Text>
+              </View>
+              <Pressable style={styles.button} onPress={() => activeIndex === slides.length - 1 ? router.replace('/role') : goToSlide(activeIndex + 1)}>
+                <Text style={styles.buttonText}>{activeIndex === slides.length - 1 ? 'Get Started' : 'Next'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+        onViewableItemsChanged={({ viewableItems }) => {
+          const index = viewableItems[0]?.index;
+          if (index != null) setActiveIndex(index);
+        }}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: Colors.greenDeep },
-  backgroundImage: StyleSheet.absoluteFill,
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(3,34,23,0.46)' },
-  content: { flex: 1, padding: Spacing.lg, paddingTop: 64, paddingBottom: 36, justifyContent: 'space-between' },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  logoMark: { width: 42, height: 42, borderRadius: 15, backgroundColor: Colors.lime, alignItems: 'center', justifyContent: 'center' },
-  leaf: { color: Colors.greenDeep, fontSize: 30, fontWeight: '800', transform: [{ rotate: '-35deg' }] },
-  skip: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  splash: { flex: 1, backgroundColor: '#f8f8f3', alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 250, height: 170 },
+  splashDots: { position: 'absolute', bottom: 190, flexDirection: 'row', gap: 7 },
+  splashDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#79b34b' },
+  splashDotActive: { backgroundColor: Colors.green },
+  screen: { flex: 1, backgroundColor: Colors.greenDeep },
+  slide: { flex: 1, width: '100%' },
+  image: StyleSheet.absoluteFill,
+  scrim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.38)' },
+  slideContent: { flex: 1, padding: Spacing.lg, paddingTop: 50, paddingBottom: 34, justifyContent: 'space-between' },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  back: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.28)', alignItems: 'center', justifyContent: 'center' },
+  backPlaceholder: { width: 42, height: 42 },
+  backText: { color: '#fff', fontSize: 32, lineHeight: 34, marginTop: -4 },
+  skip: { color: '#fff', fontWeight: '800', fontSize: 15 },
   copy: { gap: Spacing.md },
   progress: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  progressActive: { width: 32, height: 4, borderRadius: 99, backgroundColor: Colors.lime },
-  dot: { width: 5, height: 5, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.75)' },
-  title: { color: '#fff', fontSize: 42, lineHeight: 46, fontWeight: '800', letterSpacing: -1.2 },
-  body: { color: 'rgba(255,255,255,0.88)', fontSize: 17, lineHeight: 25, maxWidth: 340 },
-  button: { backgroundColor: Colors.lime, borderRadius: Radius.md, height: 58, justifyContent: 'center', alignItems: 'center' },
-  buttonText: { color: Colors.greenDeep, fontSize: 17, fontWeight: '800' },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.8)' },
+  activeDot: { width: 32, backgroundColor: Colors.lime },
+  title: { color: '#ffc928', fontSize: 31, lineHeight: 35, fontWeight: '800', letterSpacing: -0.5 },
+  body: { color: '#fff', fontSize: 14, lineHeight: 21, fontWeight: '600' },
+  button: { height: 64, borderRadius: Radius.md, backgroundColor: '#07835f', justifyContent: 'center', alignItems: 'center' },
+  buttonText: { color: Colors.lime, fontSize: 16, fontWeight: '800' },
 });
