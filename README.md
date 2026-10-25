@@ -19,6 +19,8 @@ A mobile marketplace for farmers connecting produce, machinery, and fertilizer t
    npx expo start
    ```
 
+Make sure the devices you use to run the app are connected to the same Wi-Fi network.
+
 In the output, you'll find options to open the app in a development build, Android emulator, iOS simulator, or Expo Go.
 
 You can start developing by editing the files inside the `app` directory. This project uses file-based routing.

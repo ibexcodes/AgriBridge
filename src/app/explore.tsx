@@ -1,180 +1,232 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMemo, useState } from 'react';
+import { ScrollView, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
+const listings = [
+  {
+    title: 'Fresh tomatoes',
+    category: 'Produce',
+    price: '$18',
+    unit: 'per crate',
+    location: 'Murang’a',
+    owner: 'Amina K.',
+    delivery: 'Same day',
+    accent: '#2e7d32',
+  },
+  {
+    title: '4WD tractor',
+    category: 'Machinery',
+    price: '$1,450',
+    unit: 'per week',
+    location: 'Eldoret',
+    owner: 'Kipkoech T.',
+    delivery: 'Pickup',
+    accent: '#f59e0b',
+  },
+  {
+    title: 'Balanced NPK blend',
+    category: 'Fertilizer',
+    price: '$54',
+    unit: 'per 25kg',
+    location: 'Mombasa',
+    owner: 'Musa Y.',
+    delivery: '2 day delivery',
+    accent: '#10b981',
+  },
+  {
+    title: 'Cabbage contract',
+    category: 'Produce',
+    price: '$120',
+    unit: 'per acre',
+    location: 'Nyeri',
+    owner: 'Grace N.',
+    delivery: 'Harvest ready',
+    accent: '#22c55e',
+  },
+  {
+    title: 'Irrigation pump kit',
+    category: 'Machinery',
+    price: '$880',
+    unit: 'one-time',
+    location: 'Nakuru',
+    owner: 'Benson J.',
+    delivery: 'Install support',
+    accent: '#f97316',
+  },
+  {
+    title: 'Compost booster',
+    category: 'Fertilizer',
+    price: '$39',
+    unit: 'per bag',
+    location: 'Kisii',
+    owner: 'Zawadi S.',
+    delivery: 'In stock',
+    accent: '#14b8a6',
+  },
+] as const;
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+const filters = ['All', 'Produce', 'Machinery', 'Fertilizer'] as const;
+
+export default function ExploreScreen() {
+  const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>('All');
+
+  const filteredListings = useMemo(() => {
+    if (activeFilter === 'All') {
+      return listings;
+    }
+    return listings.filter((item) => item.category === activeFilter);
+  }, [activeFilter]);
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
-
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
-
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.titleRow}>
+            <ThemedText type="subtitle">Marketplace</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              96 open listings
             </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+          </View>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            {filters.map((filter) => (
+              <Pressable
+                key={filter}
+                onPress={() => setActiveFilter(filter)}
+                style={[styles.filterButton, activeFilter === filter && styles.filterButtonActive]}
+              >
+                <ThemedText type="smallBold" style={activeFilter === filter ? styles.filterTextActive : undefined}>
+                  {filter}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {filteredListings.map((item) => (
+            <ThemedView
+              key={`${item.title}-${item.location}`}
+              type="backgroundElement"
+              style={[styles.listingCard, { borderColor: item.accent }]}
+            >
+              <View style={styles.cardTopRow}>
+                <View>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {item.category}
+                  </ThemedText>
+                  <ThemedText type="default" style={styles.cardTitle}>
+                    {item.title}
+                  </ThemedText>
+                </View>
+                <View style={[styles.pill, { backgroundColor: `${item.accent}22` }]}>
+                  <ThemedText type="smallBold" style={[styles.pillText, { color: item.accent }]}>
+                    {item.delivery}
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.priceRow}>
+                <ThemedText type="subtitle" style={[styles.priceValue, { color: item.accent }]}>
+                  {item.price}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {item.unit}
+                </ThemedText>
+              </View>
+
+              <View style={styles.cardMeta}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {item.location}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {item.owner}
+                </ThemedText>
+              </View>
             </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  container: {
     flex: 1,
   },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
+  safeArea: {
+    flex: 1,
     maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
     alignSelf: 'center',
+    width: '100%',
+  },
+  content: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    gap: Spacing.three,
+    paddingBottom: Spacing.five,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  filterRow: {
+    gap: Spacing.two,
+    paddingRight: Spacing.two,
+  },
+  filterButton: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 999,
+    backgroundColor: '#edf7ec',
+  },
+  filterButtonActive: {
+    backgroundColor: '#1e7a3d',
+  },
+  filterTextActive: {
+    color: '#ffffff',
+  },
+  listingCard: {
+    borderRadius: 22,
+    padding: Spacing.three,
+    borderWidth: 1,
+    gap: Spacing.two,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  cardTitle: {
+    marginTop: Spacing.half,
+    fontWeight: 700,
+  },
+  pill: {
+    borderRadius: 999,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    alignSelf: 'flex-start',
+  },
+  pillText: {
+    fontSize: 11,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.one,
+  },
+  priceValue: {
+    fontSize: 28,
+    lineHeight: 36,
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
   },
 });
