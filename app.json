@@ -35,6 +35,14 @@
       ],
       "expo-font",
       "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AgriBridge uses your photos to add images to marketplace listings.",
+          "cameraPermission": "AgriBridge uses your camera to take marketplace listing photos.",
+          "microphonePermission": false
+        }
+      ],
       "expo-status-bar",
       "expo-web-browser"
     ],

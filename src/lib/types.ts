@@ -1,3 +1,5 @@
+import { ImageSourcePropType } from 'react-native';
+
 export type Role = 'farmer' | 'customer';
 export type Category = 'Fresh produce' | 'Machinery' | 'Fertilizer';
 export type ListingMode = 'sell' | 'rent';
@@ -13,7 +15,7 @@ export type Listing = {
   location: string;
   farmer: string;
   farm: string;
-  image: number;
+  image: ImageSourcePropType;
   mode: ListingMode;
   quantity: string;
   isActive: boolean;
