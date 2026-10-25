@@ -3,17 +3,15 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-import '@/global.css';
-
 import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#10251d',
+    background: '#f6f8f2',
+    backgroundElement: '#ffffff',
+    backgroundSelected: '#dff2c9',
+    textSecondary: '#68756f',
   },
   dark: {
     text: '#ffffff',
@@ -22,7 +20,23 @@ export const Colors = {
     backgroundSelected: '#2E3135',
     textSecondary: '#B0B4BA',
   },
+  canvas: '#f6f8f2',
+  surface: '#ffffff',
+  surfaceSoft: '#eef5ec',
+  ink: '#10251d',
+  inkSoft: '#53645b',
+  muted: '#8c9891',
+  line: '#dbe5dc',
+  green: '#087a5c',
+  greenDeep: '#04583f',
+  lime: '#d8f04b',
+  limeSoft: '#ecf8cf',
+  red: '#a92d2d',
+  redSoft: '#fff0ef',
+  amber: '#f4bd36',
 } as const;
+
+export const Radius = { sm: 12, md: 18, lg: 26, xl: 34 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
@@ -52,6 +66,11 @@ export const Fonts = Platform.select({
 });
 
 export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
   half: 2,
   one: 4,
   two: 8,

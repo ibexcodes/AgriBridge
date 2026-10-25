@@ -4,7 +4,7 @@
     "slug": "AgriBridge",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/agribridge/app-icon.png",
     "scheme": "agribridge",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -29,7 +29,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/agribridge/logo.png",
           "imageWidth": 76
         }
       ],
@@ -39,7 +39,7 @@
       "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
+      "typedRoutes": false,
       "reactCompiler": true
     }
   }

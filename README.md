@@ -1,31 +1,43 @@
 # AgriBridge
 
-A mobile marketplace for farmers connecting produce, machinery, and fertilizer trading.
+AgriBridge is a Botswana-focused mobile marketplace connecting farmers and customers for fresh produce, farm equipment, and fertilizer.
 
-## Get started
+## Product flows
 
-> **Node.js requirement:** This project uses Expo SDK 58 and should be run with **Node 22.x LTS**.
+- Welcome and role selection for farmers and customers
+- Email sign-in and account creation screens
+- Customer marketplace with search, category filters, listing details, favorites-ready cards, and seller contact
+- Farmer dashboard with inventory controls, incoming order approval, buyer chats, profile editing, and listing creation
+- Shared messages and profile routes
+- Supabase-ready client boundary and migration for profiles, listings, orders, conversations, messages, and notifications
 
-1. Install dependencies:
+## Development
 
-   ```bash
-   nvm use
-   npm install
-   ```
+```bash
+npm install
+npx expo start
+```
 
-2. Start the app:
+The app uses Expo SDK 58, Expo Router, React Native, and NativeWind/Tailwind infrastructure. The current screens use typed React Native styles for predictable mobile rendering while the NativeWind pipeline is available for utility-driven components.
 
-   ```bash
-   npx expo start
-   ```
+To connect the backend, create a local `.env` file with:
 
-Make sure the devices you use to run the app are connected to the same Wi-Fi network.
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-publishable-key
+```
 
-In the output, you'll find options to open the app in a development build, Android emulator, iOS simulator, or Expo Go.
+Apply the database schema with the Supabase CLI:
 
-You can start developing by editing the files inside the `src/app` directory. This project uses file-based routing.
+```bash
+npx supabase db push
+```
 
-## Other setup steps
+## Quality checks
 
-- To set up ESLint for linting, run `npx expo lint`.
-- Learn more about Expo in the [official documentation](https://docs.expo.dev/).
+```bash
+npx expo-doctor
+npm run lint
+npx tsc --noEmit
+
+```

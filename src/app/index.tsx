@@ -1,314 +1,47 @@
-import { ScrollView, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { images } from '@/lib/demo-data';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 
-type Category = {
-  name: string;
-  icon: string;
-  label: string;
-  accent: string;
-};
-
-type Listing = {
-  title: string;
-  category: 'Produce' | 'Machinery' | 'Fertilizer';
-  price: string;
-  unit: string;
-  location: string;
-  distance: string;
-  farmer: string;
-  accent: string;
-};
-
-const stats = [
-  { label: 'Live listings', value: '1,284' },
-  { label: 'Avg. price', value: '$42/ha' },
-  { label: 'Orders this week', value: '318' },
-];
-
-const categories: Category[] = [
-  { name: 'Produce', icon: '🌾', label: 'Crops & grains', accent: '#2e7d32' },
-  { name: 'Machinery', icon: '🚜', label: 'Equipment', accent: '#f59e0b' },
-  { name: 'Fertilizer', icon: '🌱', label: 'Inputs', accent: '#10b981' },
-  { name: 'Logistics', icon: '🚚', label: 'Transport', accent: '#2563eb' },
-];
-
-const featuredListings: Listing[] = [
-  {
-    title: 'Premium maize kernels',
-    category: 'Produce',
-    price: '$210',
-    unit: 'per ton',
-    location: 'Kiambu County',
-    distance: '8 km away',
-    farmer: 'Wanjiku Farms',
-    accent: '#2e7d32',
-  },
-  {
-    title: 'Compact tractor bundle',
-    category: 'Machinery',
-    price: '$4,800',
-    unit: 'for lease',
-    location: 'Nakuru',
-    distance: '26 km away',
-    farmer: 'Hillcrest Agri',
-    accent: '#f59e0b',
-  },
-  {
-    title: 'Organic fertilizer mix',
-    category: 'Fertilizer',
-    price: '$68',
-    unit: 'per bag',
-    location: 'Kisumu',
-    distance: '41 km away',
-    farmer: 'GreenField Inputs',
-    accent: '#10b981',
-  },
-];
-
-export default function HomeScreen() {
+export default function WelcomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <ThemedView style={styles.heroCard}>
-            <View style={styles.topBar}>
-              <View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Good morning
-                </ThemedText>
-                <ThemedText type="subtitle">AgriBridge</ThemedText>
-              </View>
-              <Pressable style={styles.primaryButton}>
-                <ThemedText type="smallBold" style={styles.primaryText}>
-                  + New listing
-                </ThemedText>
-              </Pressable>
-            </View>
-
-            <ThemedText style={styles.heroText}>
-              Connecting farmers for produce, machinery, and fertilizer trading.
-            </ThemedText>
-
-            <ThemedView type="backgroundElement" style={styles.searchBar}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Search crops, equipment, or inputs
-              </ThemedText>
-            </ThemedView>
-          </ThemedView>
-
-          <View style={styles.statsGrid}>
-            {stats.map((stat) => (
-              <ThemedView key={stat.label} type="backgroundElement" style={styles.statCard}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {stat.label}
-                </ThemedText>
-                <ThemedText type="subtitle" style={styles.statValue}>
-                  {stat.value}
-                </ThemedText>
-              </ThemedView>
-            ))}
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <ThemedText type="smallBold">Browse by category</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              See what is moving today
-            </ThemedText>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
-            {categories.map((category) => (
-              <ThemedView
-                key={category.name}
-                type="backgroundElement"
-                style={[styles.categoryCard, { borderColor: category.accent }]}
-              >
-                <ThemedText style={styles.categoryIcon}>{category.icon}</ThemedText>
-                <ThemedText type="smallBold">{category.name}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {category.label}
-                </ThemedText>
-              </ThemedView>
-            ))}
-          </ScrollView>
-
-          <View style={styles.sectionHeader}>
-            <ThemedText type="smallBold">Featured deals</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Fresh opportunities nearby
-            </ThemedText>
-          </View>
-
-          {featuredListings.map((item) => (
-            <ThemedView
-              key={item.title}
-              type="backgroundElement"
-              style={[styles.listingCard, { borderColor: item.accent }]}
-            >
-              <View style={styles.listingHeader}>
-                <View>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {item.category}
-                  </ThemedText>
-                  <ThemedText type="default" style={styles.listingTitle}>
-                    {item.title}
-                  </ThemedText>
-                </View>
-                <View style={[styles.badge, { backgroundColor: `${item.accent}22` }]}>
-                  <ThemedText type="smallBold" style={[styles.badgeText, { color: item.accent }]}>
-                    {item.distance}
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.priceRow}>
-                <ThemedText type="subtitle" style={[styles.priceText, { color: item.accent }]}>
-                  {item.price}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.unit}
-                </ThemedText>
-              </View>
-
-              <View style={styles.metaRow}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.location}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  by {item.farmer}
-                </ThemedText>
-              </View>
-            </ThemedView>
-          ))}
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+    <ImageBackground source={images.hero} style={styles.background} resizeMode="cover">
+      <StatusBar style="light" />
+      <View style={styles.overlay} />
+      <View style={styles.content}>
+        <View style={styles.topRow}>
+          <View style={styles.logoMark}><Text style={styles.leaf}>⌁</Text></View>
+          <Pressable onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
+        </View>
+        <View style={styles.copy}>
+          <View style={styles.progress}><View style={styles.progressActive} /><View style={styles.dot} /><View style={styles.dot} /></View>
+          <Text style={styles.title}>Fresh produce.{'\n'}Real connection.</Text>
+          <Text style={styles.body}>A simple marketplace for farmers and buyers across Botswana.</Text>
+        </View>
+        <Pressable style={styles.button} onPress={() => router.push('/role')}>
+          <Text style={styles.buttonText}>Get started  →</Text>
+        </Pressable>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  content: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    gap: Spacing.three,
-    paddingBottom: Spacing.five,
-  },
-  heroCard: {
-    borderRadius: 28,
-    padding: Spacing.three,
-    gap: Spacing.three,
-    backgroundColor: '#edf7ec',
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: Spacing.three,
-  },
-  heroText: {
-    fontSize: 18,
-    lineHeight: 28,
-    fontWeight: 600,
-    color: '#1b3b2a',
-  },
-  primaryButton: {
-    backgroundColor: '#1e7a3d',
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
-  primaryText: {
-    color: '#ffffff',
-  },
-  searchBar: {
-    borderRadius: 16,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    borderWidth: 1,
-    borderColor: '#d7ebd9',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 18,
-    padding: Spacing.three,
-    gap: Spacing.one,
-  },
-  statValue: {
-    fontSize: 20,
-    lineHeight: 28,
-  },
-  sectionHeader: {
-    gap: Spacing.one,
-    marginTop: Spacing.one,
-  },
-  categoryRow: {
-    paddingRight: Spacing.three,
-    gap: Spacing.two,
-  },
-  categoryCard: {
-    width: 140,
-    borderRadius: 22,
-    padding: Spacing.three,
-    borderWidth: 1,
-    gap: Spacing.one,
-  },
-  categoryIcon: {
-    fontSize: 28,
-  },
-  listingCard: {
-    borderRadius: 20,
-    padding: Spacing.three,
-    borderWidth: 1,
-    gap: Spacing.two,
-  },
-  listingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-  },
-  listingTitle: {
-    marginTop: Spacing.half,
-    fontWeight: 700,
-  },
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontSize: 11,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.one,
-  },
-  priceText: {
-    fontSize: 28,
-    lineHeight: 36,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-  },
+  background: { flex: 1, backgroundColor: Colors.greenDeep },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(3,34,23,0.46)' },
+  content: { flex: 1, padding: Spacing.lg, paddingTop: 64, paddingBottom: 36, justifyContent: 'space-between' },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  logoMark: { width: 42, height: 42, borderRadius: 15, backgroundColor: Colors.lime, alignItems: 'center', justifyContent: 'center' },
+  leaf: { color: Colors.greenDeep, fontSize: 30, fontWeight: '800', transform: [{ rotate: '-35deg' }] },
+  skip: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  copy: { gap: Spacing.md },
+  progress: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  progressActive: { width: 32, height: 4, borderRadius: 99, backgroundColor: Colors.lime },
+  dot: { width: 5, height: 5, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.75)' },
+  title: { color: '#fff', fontSize: 42, lineHeight: 46, fontWeight: '800', letterSpacing: -1.2 },
+  body: { color: 'rgba(255,255,255,0.88)', fontSize: 17, lineHeight: 25, maxWidth: 340 },
+  button: { backgroundColor: Colors.lime, borderRadius: Radius.md, height: 58, justifyContent: 'center', alignItems: 'center' },
+  buttonText: { color: Colors.greenDeep, fontSize: 17, fontWeight: '800' },
 });
