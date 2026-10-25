@@ -1,4 +1,4 @@
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -7,7 +7,8 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 
 export default function WelcomeScreen() {
   return (
-    <ImageBackground source={images.hero} style={styles.background} resizeMode="cover">
+    <View style={styles.background}>
+      <Image source={images.hero} style={styles.backgroundImage} resizeMode="cover" />
       <StatusBar style="light" />
       <View style={styles.overlay} />
       <View style={styles.content}>
@@ -24,12 +25,13 @@ export default function WelcomeScreen() {
           <Text style={styles.buttonText}>Get started  →</Text>
         </Pressable>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: { flex: 1, backgroundColor: Colors.greenDeep },
+  backgroundImage: StyleSheet.absoluteFill,
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(3,34,23,0.46)' },
   content: { flex: 1, padding: Spacing.lg, paddingTop: 64, paddingBottom: 36, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
