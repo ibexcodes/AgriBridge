@@ -3,7 +3,7 @@ import { ImageSourcePropType } from 'react-native';
 import * as Location from 'expo-location';
 
 import { requireSupabase, supabase } from './supabase';
-import { Chat, Listing, Order, Profile, UserLocation } from './types';
+import { Chat, FulfillmentMethod, Listing, Order, Profile, UserLocation } from './types';
 
 type AppStore = {
   listings: Listing[];
@@ -27,7 +27,7 @@ type AppStore = {
   completeOrder: (id: string) => Promise<void>;
   addToCart: (listing: Listing) => void;
   removeFromCart: (id: string) => void;
-  createOrder: (listingId: string) => Promise<void>;
+  createOrder: (listingId: string, fulfillmentMethod: FulfillmentMethod) => Promise<void>;
   toggleFavorite: (listingId: string) => Promise<void>;
   openConversation: (listingId: string, farmerId: string) => Promise<string>;
   sendMessage: (conversationId: string, body: string) => Promise<void>;
@@ -109,7 +109,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
 
       const [profileResult, orderResult, conversationResult, favoriteResult] = await Promise.all([
         client.from('profiles').select('full_name,location,latitude,longitude').eq('id', id).maybeSingle(),
-        client.from('orders').select('id,listing_id,total_amount,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
+        client.from('orders').select('id,listing_id,total_amount,item_amount,delivery_fee,fulfillment_method,delivery_area,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
         client.from('conversations').select('id,listing_id,customer_id,farmer_id,listings(title)').or(`customer_id.eq.${id},farmer_id.eq.${id}`),
         client.from('favorites').select('listing_id').eq('user_id', id),
       ]);
@@ -137,6 +137,10 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         listingTitle: relatedRow(row.listings)?.title ?? 'Listing',
         customer: relatedRow(row.profiles)?.full_name ?? 'Customer',
         amount: Number(row.total_amount),
+        itemAmount: Number(row.item_amount ?? row.total_amount),
+        deliveryFee: Number(row.delivery_fee ?? 0),
+        fulfillmentMethod: row.fulfillment_method ?? 'pickup',
+        deliveryArea: row.delivery_area ?? 'pickup',
         status: row.status,
         received: new Date(row.created_at).toLocaleDateString(),
       })));
@@ -239,11 +243,12 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     removeFromCart: (id) => {
       setCart((current) => current.filter((item) => item.id !== id));
     },
-    createOrder: async (listingId) => {
+    createOrder: async (listingId, fulfillmentMethod) => {
       if (!userId) throw new Error('Sign in as a customer before checking out.');
       const result = await requireSupabase().rpc('create_marketplace_order', {
         p_listing_id: listingId,
         p_quantity: 1,
+        p_fulfillment_method: fulfillmentMethod,
       });
       if (result.error) throw result.error;
       setCart((current) => current.filter((item) => item.id !== listingId));

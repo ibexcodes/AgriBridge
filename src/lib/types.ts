@@ -4,6 +4,7 @@ export type Role = 'farmer' | 'customer';
 export type Category = 'Fresh produce' | 'Machinery' | 'Fertilizer';
 export type ListingMode = 'sell' | 'rent';
 export type OrderStatus = 'pending' | 'approved' | 'completed' | 'cancelled';
+export type FulfillmentMethod = 'pickup' | 'delivery';
 
 export type Listing = {
   id: string;
@@ -30,6 +31,10 @@ export type Order = {
   listingTitle: string;
   customer: string;
   amount: number;
+  itemAmount?: number;
+  deliveryFee?: number;
+  fulfillmentMethod?: FulfillmentMethod;
+  deliveryArea?: 'same_area' | 'different_area' | 'pickup';
   status: OrderStatus;
   received: string;
 };
