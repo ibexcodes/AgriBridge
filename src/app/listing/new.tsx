@@ -5,7 +5,6 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { Button, Card, Field, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { images } from '@/lib/demo-data';
 import { useAppStore } from '@/lib/app-store';
 import { Category } from '@/lib/types';
 
@@ -48,29 +47,33 @@ export default function NewListingScreen() {
     if (!result.canceled) setPhotoUri(result.assets[0].uri);
   };
 
-  const publish = () => {
-    addListing({
-      id: `listing-${Date.now()}`,
-      title,
-      category,
-      description,
-      price: Number(price),
-      unit: category === 'Machinery' ? 'per day' : 'per unit',
-      location: 'Mahalapye',
-      farmer: 'Johanson Sebudi',
-      farm: "Johanson's farm",
-      image: photoUri
-        ? { uri: photoUri }
-        : category === 'Machinery'
-          ? images.tractor
-          : category === 'Fertilizer'
-            ? images.fertilizer
-            : images.produce,
-      mode: category === 'Machinery' ? 'rent' : 'sell',
-      quantity: 'Available now',
-      isActive: true,
-    });
-    router.replace('/farmer');
+  const publish = async () => {
+    try {
+      await addListing({
+        id: `listing-${Date.now()}`,
+        title,
+        category,
+        description,
+        price: Number(price),
+        unit: category === 'Machinery' ? 'per day' : 'per unit',
+        location: 'Mahalapye',
+        farmer: 'Johanson Sebudi',
+        farm: "Johanson's farm",
+        image: photoUri
+          ? { uri: photoUri }
+          : category === 'Machinery'
+            ? require('@/assets/agribridge/onboarding-machinery.jpg')
+            : category === 'Fertilizer'
+              ? require('@/assets/agribridge/onboarding-fertilizer.jpg')
+              : require('@/assets/agribridge/onboarding-produce.jpg'),
+        mode: category === 'Machinery' ? 'rent' : 'sell',
+        quantity: 'Available now',
+        isActive: true,
+      });
+      router.replace('/farmer');
+    } catch (error) {
+      Alert.alert('Could not publish listing', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
 
   return (

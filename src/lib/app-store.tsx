@@ -199,7 +199,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     },
     saveProfile: async (nextProfile) => {
       if (!userId) throw new Error('Sign in before updating your profile.');
-      const result = await requireSupabase().from('profiles').update({ full_name: nextProfile.farm, location: nextProfile.location }).eq('id', userId);
+      const result = await requireSupabase().from('profiles').update({ full_name: nextProfile.name || nextProfile.farm, farm_name: nextProfile.farm, location: nextProfile.location }).eq('id', userId);
       if (result.error) throw result.error;
       setProfile(nextProfile);
     },
