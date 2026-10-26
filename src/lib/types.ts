@@ -5,6 +5,7 @@ export type Category = 'Fresh produce' | 'Machinery' | 'Fertilizer';
 export type ListingMode = 'sell' | 'rent';
 export type OrderStatus = 'pending' | 'approved' | 'completed' | 'cancelled';
 export type FulfillmentMethod = 'pickup' | 'delivery';
+export type DeliveryStatus = 'packaging' | 'on_the_way' | 'arrived';
 
 export type Listing = {
   id: string;
@@ -35,6 +36,12 @@ export type Order = {
   deliveryFee?: number;
   fulfillmentMethod?: FulfillmentMethod;
   deliveryArea?: 'same_area' | 'different_area' | 'pickup';
+  deliveryStatus?: DeliveryStatus;
+  buyerLatitude?: number;
+  buyerLongitude?: number;
+  farmerLatitude?: number;
+  farmerLongitude?: number;
+  deliveryUpdatedAt?: string;
   status: OrderStatus;
   received: string;
 };

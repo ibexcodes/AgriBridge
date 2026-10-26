@@ -3,7 +3,7 @@ import { ImageSourcePropType } from 'react-native';
 import * as Location from 'expo-location';
 
 import { requireSupabase, supabase } from './supabase';
-import { Chat, FulfillmentMethod, Listing, Order, Profile, UserLocation } from './types';
+import { Chat, DeliveryStatus, FulfillmentMethod, Listing, Order, Profile, UserLocation } from './types';
 
 type AppStore = {
   listings: Listing[];
@@ -28,6 +28,8 @@ type AppStore = {
   addToCart: (listing: Listing) => void;
   removeFromCart: (id: string) => void;
   createOrder: (listingId: string, fulfillmentMethod: FulfillmentMethod) => Promise<void>;
+  updateDeliveryStatus: (orderId: string, status: DeliveryStatus) => Promise<void>;
+  updateDeliveryLocation: (orderId: string) => Promise<void>;
   toggleFavorite: (listingId: string) => Promise<void>;
   openConversation: (listingId: string, farmerId: string) => Promise<string>;
   sendMessage: (conversationId: string, body: string) => Promise<void>;
@@ -109,7 +111,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
 
       const [profileResult, orderResult, conversationResult, favoriteResult] = await Promise.all([
         client.from('profiles').select('full_name,location,latitude,longitude').eq('id', id).maybeSingle(),
-        client.from('orders').select('id,listing_id,total_amount,item_amount,delivery_fee,fulfillment_method,delivery_area,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
+        client.from('orders').select('id,listing_id,total_amount,item_amount,delivery_fee,fulfillment_method,delivery_area,delivery_status,buyer_latitude,buyer_longitude,farmer_latitude,farmer_longitude,delivery_updated_at,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
         client.from('conversations').select('id,listing_id,customer_id,farmer_id,listings(title)').or(`customer_id.eq.${id},farmer_id.eq.${id}`),
         client.from('favorites').select('listing_id').eq('user_id', id),
       ]);
@@ -141,6 +143,12 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         deliveryFee: Number(row.delivery_fee ?? 0),
         fulfillmentMethod: row.fulfillment_method ?? 'pickup',
         deliveryArea: row.delivery_area ?? 'pickup',
+        deliveryStatus: row.delivery_status ?? undefined,
+        buyerLatitude: row.buyer_latitude ?? undefined,
+        buyerLongitude: row.buyer_longitude ?? undefined,
+        farmerLatitude: row.farmer_latitude ?? undefined,
+        farmerLongitude: row.farmer_longitude ?? undefined,
+        deliveryUpdatedAt: row.delivery_updated_at ?? undefined,
         status: row.status,
         received: new Date(row.created_at).toLocaleDateString(),
       })));
@@ -252,6 +260,27 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       });
       if (result.error) throw result.error;
       setCart((current) => current.filter((item) => item.id !== listingId));
+      await load(userId);
+    },
+    updateDeliveryStatus: async (orderId, status) => {
+      if (!userId) throw new Error('Sign in before updating delivery status.');
+      const result = await requireSupabase().from('orders').update({ delivery_status: status }).eq('id', orderId);
+      if (result.error) throw result.error;
+      await load(userId);
+    },
+    updateDeliveryLocation: async (orderId) => {
+      if (!userId) throw new Error('Sign in before sharing delivery location.');
+      const location = await (async () => {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!permission.granted) throw new Error('Location permission is required to share your delivery position.');
+        return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      })();
+      const result = await requireSupabase().from('orders').update({
+        farmer_latitude: location.coords.latitude,
+        farmer_longitude: location.coords.longitude,
+        delivery_updated_at: new Date().toISOString(),
+      }).eq('id', orderId);
+      if (result.error) throw result.error;
       await load(userId);
     },
     refreshCurrentLocation: async () => {
