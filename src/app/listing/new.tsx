@@ -9,7 +9,7 @@ import { useAppStore } from '@/lib/app-store';
 import { Category, ListingMode } from '@/lib/types';
 
 export default function NewListingScreen() {
-  const { addListing, currentLocation, refreshCurrentLocation } = useAppStore();
+  const { addListing, profile } = useAppStore();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Fresh produce');
   const [mode, setMode] = useState<ListingMode>('sell');
@@ -50,14 +50,10 @@ export default function NewListingScreen() {
 
   const publish = async () => {
     try {
-      let listingCoordinates = currentLocation;
-      if (!listingCoordinates) {
-        try {
-          listingCoordinates = await refreshCurrentLocation();
-        } catch (locationError) {
-          Alert.alert('GPS location required', locationError instanceof Error ? locationError.message : 'Enable location access before publishing this listing.');
-          return;
-        }
+      const listingLocation = profile.location.trim();
+      if (!listingLocation) {
+        Alert.alert('Location required', 'Enter your town or district in your profile before publishing a listing.');
+        return;
       }
       await addListing({
         id: `listing-${Date.now()}`,
@@ -66,7 +62,7 @@ export default function NewListingScreen() {
         description,
         price: Number(price),
         unit: category === 'Machinery' && mode === 'rent' ? 'per day' : 'per unit',
-        location: 'Mahalapye',
+        location: listingLocation,
         farmer: 'Johanson Sebudi',
         farm: "Johanson's farm",
         image: photoUri
@@ -79,8 +75,8 @@ export default function NewListingScreen() {
         mode: category === 'Machinery' ? mode : 'sell',
         quantity: 'Available now',
         isActive: true,
-        latitude: listingCoordinates?.latitude,
-        longitude: listingCoordinates?.longitude,
+        latitude: profile.latitude,
+        longitude: profile.longitude,
       });
       router.replace('/farmer');
     } catch (error) {
@@ -93,7 +89,7 @@ export default function NewListingScreen() {
       <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/farmer')}><Text style={styles.back}>← Back</Text></Pressable>
       <View style={styles.intro}>
         <Text style={styles.title}>New listing</Text>
-        <Text style={styles.subtitle}>Give buyers a clear, honest picture of what you offer.</Text>
+        <Text style={styles.subtitle}>Give buyers a clear, honest picture of what you offer. This listing will use your saved profile location.</Text>
       </View>
       <Card>
         <Text style={styles.label}>Listing photo</Text>
