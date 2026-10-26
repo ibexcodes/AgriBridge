@@ -17,7 +17,16 @@ export default function RegisterScreen() {
   const register = async () => {
     if (!name.trim() || !email.trim() || password.length < 6 || !accepted) return;
     const client = requireSupabase();
-    const result = await client.auth.signUp({ email: email.trim(), password });
+    const result = await client.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: {
+          full_name: name.trim(),
+          role: isFarmer ? 'farmer' : 'customer',
+        },
+      },
+    });
     if (result.error) {
       Alert.alert('Registration failed', result.error.message);
       return;
@@ -27,17 +36,22 @@ export default function RegisterScreen() {
       router.replace(`/auth?role=${role}`);
       return;
     }
-    const profile = await client.from('profiles').upsert({
-      id: result.data.user.id,
-      full_name: name.trim(),
-      role: isFarmer ? 'farmer' : 'customer',
-      location: null,
-    });
-    if (profile.error) {
-      Alert.alert('Profile setup failed', profile.error.message);
+    if (result.data.session) {
+      const profile = await client.from('profiles').upsert({
+        id: result.data.user.id,
+        full_name: name.trim(),
+        role: isFarmer ? 'farmer' : 'customer',
+        location: null,
+      });
+      if (profile.error) {
+        Alert.alert('Profile setup failed', profile.error.message);
+        return;
+      }
+      router.replace(isFarmer ? '/farmer' : '/customer');
       return;
     }
-    router.replace(isFarmer ? '/farmer' : '/customer');
+    Alert.alert('Check your email', 'Confirm your email address, then sign in to continue.');
+    router.replace(`/auth?role=${role}`);
   };
 
   return (
