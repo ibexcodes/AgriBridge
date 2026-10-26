@@ -8,6 +8,7 @@ type AppStore = {
   listings: Listing[];
   orders: Order[];
   cart: Listing[];
+  favoriteIds: string[];
   chats: Chat[];
   profile: Profile;
   loading: boolean;
@@ -22,6 +23,10 @@ type AppStore = {
   addToCart: (listing: Listing) => void;
   removeFromCart: (id: string) => void;
   createOrder: (listingId: string) => Promise<void>;
+  toggleFavorite: (listingId: string) => Promise<void>;
+  openConversation: (listingId: string, farmerId: string) => Promise<string>;
+  sendMessage: (conversationId: string, body: string) => Promise<void>;
+  getMessages: (conversationId: string) => Promise<{ id: string; body: string; senderId: string; createdAt: string }[]>;
   saveProfile: (profile: Profile) => Promise<void>;
   addListing: (listing: Listing) => Promise<void>;
   signOut: () => Promise<void>;
@@ -49,6 +54,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<Listing[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [profile, setProfile] = useState(emptyProfile);
   const [userId, setUserId] = useState<string | null>(null);
@@ -79,19 +85,24 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         mode: row.listing_mode,
         quantity: row.quantity || 'Available now',
         isActive: row.is_active,
+        farmerId: row.farmer_id,
+        latitude: row.latitude ?? undefined,
+        longitude: row.longitude ?? undefined,
       })));
 
       if (!id) {
         setOrders([]);
         setChats([]);
+        setFavoriteIds([]);
         setProfile(emptyProfile);
         return;
       }
 
-      const [profileResult, orderResult, conversationResult] = await Promise.all([
+      const [profileResult, orderResult, conversationResult, favoriteResult] = await Promise.all([
         client.from('profiles').select('full_name,location').eq('id', id).maybeSingle(),
         client.from('orders').select('id,listing_id,total_amount,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
         client.from('conversations').select('id,listing_id,customer_id,farmer_id,listings(title)').or(`customer_id.eq.${id},farmer_id.eq.${id}`),
+        client.from('favorites').select('listing_id').eq('user_id', id),
       ]);
       if (profileResult.error) throw profileResult.error;
       if (orderResult.error) throw orderResult.error;
@@ -112,7 +123,10 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         listingTitle: relatedRow(row.listings)?.title ?? 'Listing',
         preview: 'Open conversation to view messages.',
         unread: 0,
+        farmerId: row.farmer_id,
+        listingId: row.listing_id,
       })));
+      setFavoriteIds((favoriteResult.data ?? []).map((row) => row.listing_id));
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unable to load marketplace data.';
       setError(message);
@@ -149,6 +163,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     listings,
     orders,
     cart,
+    favoriteIds,
     chats,
     profile,
     loading,
@@ -208,6 +223,41 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       setCart((current) => current.filter((item) => item.id !== listingId));
       await load(userId);
     },
+    toggleFavorite: async (listingId) => {
+      if (!userId) throw new Error('Sign in as a customer to save favourites.');
+      const client = requireSupabase();
+      const isFavorite = favoriteIds.includes(listingId);
+      const result = isFavorite
+        ? await client.from('favorites').delete().eq('user_id', userId).eq('listing_id', listingId)
+        : await client.from('favorites').insert({ user_id: userId, listing_id: listingId });
+      if (result.error) throw result.error;
+      setFavoriteIds((current) => isFavorite ? current.filter((id) => id !== listingId) : [...current, listingId]);
+    },
+    openConversation: async (listingId, farmerId) => {
+      if (!userId) throw new Error('Sign in to message this farmer.');
+      const result = await requireSupabase().from('conversations').upsert({
+        customer_id: userId,
+        farmer_id: farmerId,
+        listing_id: listingId,
+      }, { onConflict: 'customer_id,farmer_id,listing_id' }).select('id').single();
+      if (result.error) throw result.error;
+      await load(userId);
+      return result.data.id;
+    },
+    sendMessage: async (conversationId, body) => {
+      if (!userId || !body.trim()) return;
+      const result = await requireSupabase().from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: userId,
+        body: body.trim(),
+      });
+      if (result.error) throw result.error;
+    },
+    getMessages: async (conversationId) => {
+      const result = await requireSupabase().from('messages').select('id,body,sender_id,created_at').eq('conversation_id', conversationId).order('created_at', { ascending: true });
+      if (result.error) throw result.error;
+      return (result.data ?? []).map((row) => ({ id: row.id, body: row.body, senderId: row.sender_id, createdAt: row.created_at }));
+    },
     saveProfile: async (nextProfile) => {
       if (!userId) throw new Error('Sign in before updating your profile.');
       const result = await requireSupabase().from('profiles').update({ full_name: nextProfile.name || nextProfile.farm, farm_name: nextProfile.farm, location: nextProfile.location }).eq('id', userId);
@@ -239,6 +289,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         listing_mode: listing.mode,
         is_active: true,
         image_url: imageUrl,
+        latitude: listing.latitude ?? null,
+        longitude: listing.longitude ?? null,
       });
       if (result.error) throw result.error;
       await load(userId);
@@ -247,7 +299,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       const result = await requireSupabase().auth.signOut();
       if (result.error) throw result.error;
     },
-  }), [listings, orders, cart, chats, profile, loading, error, userId]);
+  }), [listings, orders, cart, favoriteIds, chats, profile, loading, error, userId]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

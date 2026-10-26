@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -8,7 +8,7 @@ import { useAppStore } from '@/lib/app-store';
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { listings, addToCart } = useAppStore();
+  const { listings, addToCart, openConversation } = useAppStore();
   const listing = listings.find((item) => item.id === id) ?? listings[0];
   if (!listing) {
     return <Screen><Text style={styles.location}>This listing is no longer available.</Text></Screen>;
@@ -17,7 +17,7 @@ export default function ListingDetail() {
     <Screen>
       <View style={styles.top}><Pressable accessibilityLabel="Go back" onPress={() => router.canGoBack() ? router.back() : router.replace('/customer')} style={styles.back}><Ionicons name="arrow-back" size={21} color={Colors.green} /></Pressable><Text style={styles.topTitle}>Listing details</Text><Ionicons name="share-outline" size={23} color={Colors.green} /></View>
       <Image source={listing.image} style={styles.image} />
-      <View style={styles.content}><Text style={styles.category}>{listing.category.toUpperCase()}</Text><Text style={styles.title}>{listing.title}</Text><Text style={styles.price}>BWP {listing.price.toFixed(2)} <Text style={styles.unit}>/ {listing.unit}</Text></Text><Text style={styles.location}>⌖ {listing.location} · {listing.farm}</Text><Card><Text style={styles.cardTitle}>About this listing</Text><Text style={styles.description}>{listing.description}</Text><Text style={styles.quantity}>{listing.quantity}</Text></Card><Card><Text style={styles.cardTitle}>Seller</Text><View style={styles.seller}><View style={styles.avatar}><Text style={styles.avatarText}>{listing.farmer[0]}</Text></View><View><Text style={styles.sellerName}>{listing.farmer}</Text><Text style={styles.location}>Verified local farmer</Text></View></View></Card><View style={styles.actions}><Button variant="outline" onPress={() => router.push('/messages')}>Message farmer</Button><Button onPress={() => { addToCart(listing); router.push('/cart'); }}>Add to cart</Button></View></View>
+      <View style={styles.content}><Text style={styles.category}>{listing.category.toUpperCase()}</Text><Text style={styles.title}>{listing.title}</Text><Text style={styles.price}>BWP {listing.price.toFixed(2)} <Text style={styles.unit}>/ {listing.unit}</Text></Text><Text style={styles.location}>⌖ {listing.location} · {listing.farm}</Text><Card><Text style={styles.cardTitle}>About this listing</Text><Text style={styles.description}>{listing.description}</Text><Text style={styles.quantity}>{listing.quantity}</Text></Card><Card><Text style={styles.cardTitle}>Seller</Text><View style={styles.seller}><View style={styles.avatar}><Text style={styles.avatarText}>{listing.farmer[0]}</Text></View><View><Text style={styles.sellerName}>{listing.farmer}</Text><Text style={styles.location}>Verified local farmer</Text></View></View></Card><View style={styles.actions}><Button variant="outline" onPress={() => void openConversation(listing.id, listing.farmerId ?? '').then((conversationId) => router.push(`/message/${conversationId}`)).catch((error) => Alert.alert('Messaging unavailable', error instanceof Error ? error.message : 'Please try again.'))}>Message farmer</Button><Button onPress={() => { addToCart(listing); router.push('/cart'); }}>Add to cart</Button></View></View>
     </Screen>
   );
 }

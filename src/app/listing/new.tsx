@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 
 import { Button, Card, Field, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -16,6 +17,7 @@ export default function NewListingScreen() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const valid = Boolean(title.trim() && description.trim() && Number(price) > 0);
 
   const takePhoto = async () => {
@@ -50,6 +52,13 @@ export default function NewListingScreen() {
 
   const publish = async () => {
     try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      let listingCoordinates = coordinates;
+      if (permission.granted) {
+        const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        listingCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
+        setCoordinates(listingCoordinates);
+      }
       await addListing({
         id: `listing-${Date.now()}`,
         title,
@@ -70,6 +79,8 @@ export default function NewListingScreen() {
         mode: category === 'Machinery' ? mode : 'sell',
         quantity: 'Available now',
         isActive: true,
+        latitude: listingCoordinates?.latitude,
+        longitude: listingCoordinates?.longitude,
       });
       router.replace('/farmer');
     } catch (error) {

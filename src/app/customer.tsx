@@ -15,7 +15,7 @@ export default function CustomerHome() {
   const { listings, profile, cart } = useAppStore();
   const [category, setCategory] = useState<Category | 'All'>('All');
   const [query, setQuery] = useState('');
-  const filtered = useMemo(() => listings.filter((item) => (category === 'All' || item.category === category) && item.title.toLowerCase().includes(query.toLowerCase())), [category, listings, query]);
+  const filtered = useMemo(() => listings.filter((item) => item.isActive && (category === 'All' || item.category === category) && item.title.toLowerCase().includes(query.toLowerCase())), [category, listings, query]);
 
   return (
     <Screen>

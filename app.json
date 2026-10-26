@@ -36,6 +36,12 @@
       "expo-font",
       "expo-image",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "AgriBridge uses your location to show nearby farmers and listings."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "AgriBridge uses your photos to add images to marketplace listings.",

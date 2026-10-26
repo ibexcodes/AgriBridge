@@ -19,6 +19,9 @@ export type Listing = {
   mode: ListingMode;
   quantity: string;
   isActive: boolean;
+  farmerId?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type Order = {
@@ -37,6 +40,8 @@ export type Chat = {
   listingTitle: string;
   preview: string;
   unread: number;
+  farmerId?: string;
+  listingId?: string;
 };
 
 export type Profile = {

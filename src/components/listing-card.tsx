@@ -1,15 +1,29 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Listing } from '@/lib/types';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { useAppStore } from '@/lib/app-store';
 
 export function ListingCard({ listing }: { listing: Listing }) {
+  const { favoriteIds, toggleFavorite } = useAppStore();
+  const isFavorite = favoriteIds.includes(listing.id);
   return (
     <Pressable onPress={() => router.push(`/listing/${listing.id}`)} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <Image source={listing.image} style={styles.image} />
       <View style={styles.body}>
-        <View style={styles.row}><Text style={styles.category}>{listing.category.toUpperCase()}</Text><Text style={styles.favorite}>♡</Text></View>
+        <View style={styles.row}>
+          <Text style={styles.category}>{listing.category.toUpperCase()}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Save to favourites'}
+            hitSlop={10}
+            onPress={() => void toggleFavorite(listing.id).catch((error) => Alert.alert('Favourites unavailable', error instanceof Error ? error.message : 'Please try again.'))}
+          >
+            <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} color={Colors.red} />
+          </Pressable>
+        </View>
         <Text style={styles.title}>{listing.title}</Text>
         <Text style={styles.unit}>{listing.unit}</Text>
         <Text style={styles.price}>BWP {listing.price.toFixed(2)}</Text>
