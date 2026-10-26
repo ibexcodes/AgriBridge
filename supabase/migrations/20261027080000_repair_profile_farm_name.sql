@@ -1,0 +1,4 @@
+alter table public.profiles
+  add column if not exists farm_name text;
+
+notify pgrst, 'reload schema';

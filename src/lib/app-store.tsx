@@ -349,6 +349,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     },
     openConversation: async (listingId, farmerId) => {
       if (!userId) throw new Error('Sign in to message this farmer.');
+      if (!farmerId) throw new Error('This listing is missing its farmer account. Refresh the marketplace and try again.');
       const result = await requireSupabase().from('conversations').upsert({
         customer_id: userId,
         farmer_id: farmerId,
