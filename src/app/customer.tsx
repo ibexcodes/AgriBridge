@@ -63,7 +63,7 @@ export default function CustomerHome() {
           <Text style={styles.empty}>No listings match this search. Try widening the area or changing your filters.</Text>
         ) : null}
       </View>
-      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label={`Cart${cart.length ? ` (${cart.length})` : ''}`} onPress={() => router.push('/cart')} /><View style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></View><NavItem icon="receipt-outline" label="Orders" onPress={() => router.push('/orders')} /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
+      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label={`Cart${cart.length ? ` (${cart.length})` : ''}`} onPress={() => router.push('/cart')} /><Pressable accessibilityRole="button" accessibilityLabel="Open saved listings" onPress={() => router.push('/favorites')} style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></Pressable><NavItem icon="receipt-outline" label="Orders" onPress={() => router.push('/orders')} /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
     </Screen>
   );
 }
