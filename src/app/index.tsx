@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -72,7 +73,14 @@ export default function WelcomeScreen() {
         keyExtractor={(_, index) => String(index)}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
-            <Image source={item.image} style={styles.image} resizeMode="cover" />
+            <Image
+              source={item.image}
+              style={styles.image}
+              contentFit="cover"
+              allowDownscaling={false}
+              cachePolicy="memory-disk"
+              priority="high"
+            />
             <View style={styles.scrim} />
             <View style={[styles.slideContent, contentPadding]}>
               <View style={styles.topRow}>
