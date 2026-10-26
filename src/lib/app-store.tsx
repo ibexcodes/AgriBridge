@@ -162,7 +162,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       await load(userId);
     },
     removeListing: async (id) => {
-      const result = await requireSupabase().from('listings').delete().eq('id', id);
+      // Archive listings instead of deleting them so historical orders retain their reference.
+      const result = await requireSupabase().from('listings').update({ is_active: false }).eq('id', id);
       if (result.error) throw result.error;
       await load(userId);
     },
