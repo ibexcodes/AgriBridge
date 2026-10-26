@@ -12,7 +12,7 @@ import { Category } from '@/lib/types';
 const categories: (Category | 'All')[] = ['All', 'Fresh produce', 'Machinery', 'Fertilizer'];
 
 export default function CustomerHome() {
-  const { listings, profile } = useAppStore();
+  const { listings, profile, cart } = useAppStore();
   const [category, setCategory] = useState<Category | 'All'>('All');
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => listings.filter((item) => (category === 'All' || item.category === category) && item.title.toLowerCase().includes(query.toLowerCase())), [category, listings, query]);
@@ -30,7 +30,7 @@ export default function CustomerHome() {
         <View style={styles.search}><Ionicons name="search-outline" size={20} color={Colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search products, equipment or farms" placeholderTextColor={Colors.muted} style={styles.searchInput} /></View>
       </Section>
       <View style={styles.list}>{filtered.map((listing) => <ListingCard key={listing.id} listing={listing} />)}</View>
-      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label="Cart" /><View style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></View><NavItem icon="receipt-outline" label="Orders" /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
+      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label={`Cart${cart.length ? ` (${cart.length})` : ''}`} onPress={() => router.push('/cart')} /><View style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></View><NavItem icon="receipt-outline" label="Orders" onPress={() => router.push('/orders')} /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
     </Screen>
   );
 }

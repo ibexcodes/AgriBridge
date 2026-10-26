@@ -3,7 +3,7 @@ import { ImageSourcePropType } from 'react-native';
 export type Role = 'farmer' | 'customer';
 export type Category = 'Fresh produce' | 'Machinery' | 'Fertilizer';
 export type ListingMode = 'sell' | 'rent';
-export type OrderStatus = 'pending' | 'approved' | 'completed';
+export type OrderStatus = 'pending' | 'approved' | 'completed' | 'cancelled';
 
 export type Listing = {
   id: string;

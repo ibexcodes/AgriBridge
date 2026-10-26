@@ -7,6 +7,7 @@ import { Chat, Listing, Order, Profile } from './types';
 type AppStore = {
   listings: Listing[];
   orders: Order[];
+  cart: Listing[];
   chats: Chat[];
   profile: Profile;
   loading: boolean;
@@ -15,6 +16,11 @@ type AppStore = {
   toggleListing: (id: string) => Promise<void>;
   removeListing: (id: string) => Promise<void>;
   approveOrder: (id: string) => Promise<void>;
+  cancelOrder: (id: string) => Promise<void>;
+  completeOrder: (id: string) => Promise<void>;
+  addToCart: (listing: Listing) => void;
+  removeFromCart: (id: string) => void;
+  createOrder: (listingId: string) => Promise<void>;
   saveProfile: (profile: Profile) => Promise<void>;
   addListing: (listing: Listing) => Promise<void>;
   signOut: () => Promise<void>;
@@ -41,6 +47,7 @@ function imageFromUrl(value: string | null): ImageSourcePropType {
 export function AppStoreProvider({ children }: PropsWithChildren) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<Listing[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [profile, setProfile] = useState(emptyProfile);
   const [userId, setUserId] = useState<string | null>(null);
@@ -89,7 +96,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       if (orderResult.error) throw orderResult.error;
       if (conversationResult.error) throw conversationResult.error;
       setProfile(profileResult.data ? { name: profileResult.data.full_name, location: profileResult.data.location ?? '', farm: profileResult.data.full_name } : emptyProfile);
-      setOrders((orderResult.data ?? []).map((row) => ({
+        setOrders((orderResult.data ?? []).map((row) => ({
         id: row.id,
         listingId: row.listing_id,
         listingTitle: relatedRow(row.listings)?.title ?? 'Listing',
@@ -140,6 +147,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
   const value = useMemo<AppStore>(() => ({
     listings,
     orders,
+    cart,
     chats,
     profile,
     loading,
@@ -161,6 +169,32 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     approveOrder: async (id) => {
       const result = await requireSupabase().from('orders').update({ status: 'approved' }).eq('id', id);
       if (result.error) throw result.error;
+      await load(userId);
+    },
+    cancelOrder: async (id) => {
+      const result = await requireSupabase().from('orders').update({ status: 'cancelled' }).eq('id', id);
+      if (result.error) throw result.error;
+      await load(userId);
+    },
+    completeOrder: async (id) => {
+      const result = await requireSupabase().from('orders').update({ status: 'completed' }).eq('id', id);
+      if (result.error) throw result.error;
+      await load(userId);
+    },
+    addToCart: (listing) => {
+      setCart((current) => current.some((item) => item.id === listing.id) ? current : [...current, listing]);
+    },
+    removeFromCart: (id) => {
+      setCart((current) => current.filter((item) => item.id !== id));
+    },
+    createOrder: async (listingId) => {
+      if (!userId) throw new Error('Sign in as a customer before checking out.');
+      const result = await requireSupabase().rpc('create_marketplace_order', {
+        p_listing_id: listingId,
+        p_quantity: 1,
+      });
+      if (result.error) throw result.error;
+      setCart((current) => current.filter((item) => item.id !== listingId));
       await load(userId);
     },
     saveProfile: async (nextProfile) => {
@@ -202,7 +236,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       const result = await requireSupabase().auth.signOut();
       if (result.error) throw result.error;
     },
-  }), [listings, orders, chats, profile, loading, error, userId]);
+  }), [listings, orders, cart, chats, profile, loading, error, userId]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
