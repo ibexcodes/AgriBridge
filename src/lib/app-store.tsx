@@ -54,7 +54,8 @@ function categoryToDb(value: Listing['category']) {
 function imageFromUrl(value: string | null): ImageSourcePropType {
   if (!value) return require('@/assets/agribridge/logo.png');
   if (value.startsWith('http')) return { uri: value };
-  return { uri: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listing-images/${value}` };
+  const encodedPath = value.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+  return { uri: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listing-images/${encodedPath}` };
 }
 
 export function AppStoreProvider({ children }: PropsWithChildren) {
