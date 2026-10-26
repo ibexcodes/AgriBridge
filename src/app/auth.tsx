@@ -20,7 +20,7 @@ export default function AuthScreen() {
       <View style={styles.form}>
         <Field label="Email address" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="name@example.com" />
         <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Enter your password" />
-        <Pressable><Text style={styles.forgot}>Forgot password?</Text></Pressable>
+        <Pressable onPress={() => router.push('/forgot-password')}><Text style={styles.forgot}>Forgot password?</Text></Pressable>
         <Button onPress={async () => {
           const result = await requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
           if (result.error) {
