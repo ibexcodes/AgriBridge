@@ -18,7 +18,7 @@ function RoleCard({ role, icon, description, active, onPress }: { role: string; 
 export default function RoleScreen() {
   return (
     <Screen>
-      <Pressable onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" size={22} color={Colors.green} /></Pressable>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.back}><Ionicons name="arrow-back" size={22} color={Colors.green} /></Pressable>
       <View style={styles.intro}><Text style={styles.eyebrow}>WELCOME TO AGRIBRIDGE</Text><Text style={styles.title}>How will you use{'\n'}AgriBridge?</Text><Body muted>Choose the experience that fits you best. You can update your profile later.</Body></View>
       <View style={styles.cards}>
         <RoleCard role="I’m a farmer" icon="leaf-outline" active description="Sell produce, rent equipment, and grow your farm business." onPress={() => router.push('/auth?role=farmer')} />

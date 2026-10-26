@@ -15,7 +15,7 @@ export default function AuthScreen() {
 
   return (
     <Screen>
-      <Pressable onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" size={22} color={Colors.green} /></Pressable>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/role')} style={styles.back}><Ionicons name="arrow-back" size={22} color={Colors.green} /></Pressable>
       <View style={styles.intro}><Text style={styles.badge}>{isFarmer ? 'FARMER ACCOUNT' : 'CUSTOMER ACCOUNT'}</Text><Text style={styles.title}>Welcome back</Text><Body muted>Sign in to continue your agricultural journey.</Body></View>
       <View style={styles.form}>
         <Field label="Email address" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="name@example.com" />

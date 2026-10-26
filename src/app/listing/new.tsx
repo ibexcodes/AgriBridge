@@ -75,7 +75,7 @@ export default function NewListingScreen() {
 
   return (
     <Screen>
-      <Pressable onPress={() => router.back()}><Text style={styles.back}>← Back</Text></Pressable>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/farmer')}><Text style={styles.back}>← Back</Text></Pressable>
       <View style={styles.intro}>
         <Text style={styles.title}>New listing</Text>
         <Text style={styles.subtitle}>Give buyers a clear, honest picture of what you offer.</Text>

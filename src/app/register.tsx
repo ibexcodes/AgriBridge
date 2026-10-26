@@ -42,7 +42,7 @@ export default function RegisterScreen() {
 
   return (
     <Screen>
-      <Pressable onPress={() => router.back()}><Text style={styles.back}>← Back</Text></Pressable>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/role')}><Text style={styles.back}>← Back</Text></Pressable>
       <View style={styles.intro}><Text style={styles.badge}>{isFarmer ? 'FARMER ACCOUNT' : 'CUSTOMER ACCOUNT'}</Text><Text style={styles.title}>Create your account</Text><Body muted>Join AgriBridge and connect directly with local agriculture.</Body></View>
       <View style={styles.form}>
         <Field label="Full name" value={name} onChangeText={setName} placeholder="Your full name" />
