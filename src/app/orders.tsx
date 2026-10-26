@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -9,6 +9,18 @@ import { useAppStore } from '@/lib/app-store';
 
 export default function OrdersScreen() {
   const { orders, cancelOrder } = useAppStore();
+  const openDirections = async (latitude?: number, longitude?: number) => {
+    if (latitude == null || longitude == null) {
+      Alert.alert('Location unavailable', 'The farmer has not shared a map location yet.');
+      return;
+    }
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+    if (!(await Linking.canOpenURL(url))) {
+      Alert.alert('Maps unavailable', 'No maps application is available on this device.');
+      return;
+    }
+    await Linking.openURL(url);
+  };
   const cancel = (id: string) => {
     Alert.alert('Cancel order request?', 'The farmer will be notified and this request will remain in your order history.', [
       { text: 'Keep order', style: 'cancel' },
@@ -25,7 +37,57 @@ export default function OrdersScreen() {
       },
     ]);
   };
-  return <Screen><Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/customer')} style={styles.back}><Ionicons name="arrow-back" size={20} color={Colors.green} /><Text style={styles.backText}>Back to marketplace</Text></Pressable><Text style={styles.title}>Your orders</Text>{orders.length ? <View style={styles.stack}>{orders.map((order) => <Card key={order.id}><View style={styles.row}><Text style={styles.itemTitle}>{order.listingTitle}</Text><Text style={styles.status}>{order.status.toUpperCase()}</Text></View><Text style={styles.muted}>BWP {order.amount.toFixed(2)} · {order.received}</Text>{order.fulfillmentMethod === 'delivery' ? <><Text style={styles.muted}>Delivery · BWP {(order.deliveryFee ?? 0).toFixed(2)} · {order.deliveryArea === 'same_area' ? 'Same city/village' : 'Different city/village'}</Text><Text style={styles.deliveryStatus}>● {deliveryStatusLabel(order.deliveryStatus)}</Text>{order.buyerLatitude != null && order.buyerLongitude != null ? <MapView style={styles.map} initialRegion={{ latitude: order.buyerLatitude, longitude: order.buyerLongitude, latitudeDelta: 0.08, longitudeDelta: 0.08 }}><Marker coordinate={{ latitude: order.buyerLatitude, longitude: order.buyerLongitude }} title="Your delivery location" pinColor={Colors.red} />{order.farmerLatitude != null && order.farmerLongitude != null ? <Marker coordinate={{ latitude: order.farmerLatitude, longitude: order.farmerLongitude }} title="Farmer location" pinColor={Colors.green} /> : null}{order.farmerLatitude != null && order.farmerLongitude != null ? <Polyline coordinates={[{ latitude: order.buyerLatitude, longitude: order.buyerLongitude }, { latitude: order.farmerLatitude, longitude: order.farmerLongitude }]} strokeColor={Colors.green} strokeWidth={3} /> : null}</MapView> : null}</> : <Text style={styles.muted}>Pickup · No delivery fee</Text>}<Text style={styles.muted}>{order.status === 'pending' ? 'Waiting for the farmer to confirm availability.' : order.status === 'approved' ? 'Confirmed by the farmer. Arrange collection or delivery.' : order.status === 'completed' ? 'Completed successfully.' : 'This request was cancelled.'}</Text>{order.status === 'pending' ? <Pressable onPress={() => cancel(order.id)}><Text style={styles.cancel}>Cancel order request</Text></Pressable> : null}</Card>)}</View> : <Card><Text style={styles.itemTitle}>No orders yet</Text><Text style={styles.muted}>Your submitted order requests will appear here.</Text></Card>}</Screen>;
+  return (
+    <Screen>
+      <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/customer')} style={styles.back}>
+        <Ionicons name="arrow-back" size={20} color={Colors.green} />
+        <Text style={styles.backText}>Back to marketplace</Text>
+      </Pressable>
+      <Text style={styles.title}>Your orders</Text>
+      {orders.length ? (
+        <View style={styles.stack}>
+          {orders.map((order) => (
+            <Card key={order.id}>
+              <View style={styles.row}>
+                <Text style={styles.itemTitle}>{order.listingTitle}</Text>
+                <Text style={styles.status}>{order.status.toUpperCase()}</Text>
+              </View>
+              <Text style={styles.muted}>BWP {order.amount.toFixed(2)} · {order.received}</Text>
+              {order.fulfillmentMethod === 'delivery' ? (
+                <>
+                  <Text style={styles.muted}>Delivery · BWP {(order.deliveryFee ?? 0).toFixed(2)} · {order.deliveryArea === 'same_area' ? 'Same city/village' : 'Different city/village'}</Text>
+                  <Text style={styles.deliveryStatus}>● {deliveryStatusLabel(order.deliveryStatus)}</Text>
+                  {order.buyerLatitude != null && order.buyerLongitude != null ? (
+                    <MapView style={styles.map} initialRegion={{ latitude: order.buyerLatitude, longitude: order.buyerLongitude, latitudeDelta: 0.08, longitudeDelta: 0.08 }}>
+                      <Marker coordinate={{ latitude: order.buyerLatitude, longitude: order.buyerLongitude }} title="Your delivery location" pinColor={Colors.red} />
+                      {order.farmerLatitude != null && order.farmerLongitude != null ? <Marker coordinate={{ latitude: order.farmerLatitude, longitude: order.farmerLongitude }} title="Farmer location" pinColor={Colors.green} /> : null}
+                      {order.farmerLatitude != null && order.farmerLongitude != null ? <Polyline coordinates={[{ latitude: order.buyerLatitude, longitude: order.buyerLongitude }, { latitude: order.farmerLatitude, longitude: order.farmerLongitude }]} strokeColor={Colors.green} strokeWidth={3} /> : null}
+                    </MapView>
+                  ) : null}
+                  <Pressable style={styles.directionButton} onPress={() => void openDirections(order.farmerLatitude, order.farmerLongitude)}>
+                    <Ionicons name="navigate-outline" size={18} color={Colors.green} />
+                    <Text style={styles.directionText}>Get directions to farmer</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.muted}>Pickup · No delivery fee</Text>
+                  {order.farmerLatitude != null && order.farmerLongitude != null ? (
+                    <Pressable style={styles.directionButton} onPress={() => void openDirections(order.farmerLatitude, order.farmerLongitude)}>
+                      <Ionicons name="navigate-outline" size={18} color={Colors.green} />
+                      <Text style={styles.directionText}>Navigate to pickup</Text>
+                    </Pressable>
+                  ) : <Text style={styles.muted}>The farmer has not shared pickup coordinates yet.</Text>}
+                </>
+              )}
+              <Text style={styles.muted}>{order.status === 'pending' ? 'Waiting for the farmer to confirm availability.' : order.status === 'approved' ? 'Confirmed by the farmer. Arrange collection or delivery.' : order.status === 'completed' ? 'Completed successfully.' : 'This request was cancelled.'}</Text>
+              {order.status === 'pending' ? <Pressable onPress={() => cancel(order.id)}><Text style={styles.cancel}>Cancel order request</Text></Pressable> : null}
+            </Card>
+          ))}
+        </View>
+      ) : <Card><Text style={styles.itemTitle}>No orders yet</Text><Text style={styles.muted}>Your submitted order requests will appear here.</Text></Card>}
+    </Screen>
+  );
 }
 
 function deliveryStatusLabel(status?: string) {
@@ -44,4 +106,6 @@ const styles = StyleSheet.create({
   cancel: { color: Colors.red, fontWeight: '800', marginTop: 4 },
   deliveryStatus: { color: Colors.green, fontWeight: '800' },
   map: { height: 190, borderRadius: 12, marginVertical: Spacing.sm },
+  directionButton: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', paddingVertical: 8 },
+  directionText: { color: Colors.green, fontWeight: '800' },
 });
