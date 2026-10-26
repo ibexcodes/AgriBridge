@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ListingCard } from '@/components/listing-card';
-import { Chip, Screen, Section } from '@/components/ui';
+import { Button, Chip, Screen, Section } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAppStore } from '@/lib/app-store';
 import { Category } from '@/lib/types';
@@ -12,10 +12,31 @@ import { Category } from '@/lib/types';
 const categories: (Category | 'All')[] = ['All', 'Fresh produce', 'Machinery', 'Fertilizer'];
 
 export default function CustomerHome() {
-  const { listings, profile, cart } = useAppStore();
+  const { listings, profile, cart, currentLocation, locationLoading, locationError, refreshCurrentLocation } = useAppStore();
   const [category, setCategory] = useState<Category | 'All'>('All');
   const [query, setQuery] = useState('');
-  const filtered = useMemo(() => listings.filter((item) => item.isActive && (category === 'All' || item.category === category) && item.title.toLowerCase().includes(query.toLowerCase())), [category, listings, query]);
+  const [nearbyOnly, setNearbyOnly] = useState(false);
+  const distanceInKm = useCallback((latitude?: number, longitude?: number) => {
+    if (latitude == null || longitude == null || !currentLocation) return undefined;
+    const toRadians = (value: number) => value * Math.PI / 180;
+    const latDelta = toRadians(latitude - currentLocation.latitude);
+    const lonDelta = toRadians(longitude - currentLocation.longitude);
+    const a = Math.sin(latDelta / 2) ** 2 + Math.cos(toRadians(currentLocation.latitude)) * Math.cos(toRadians(latitude)) * Math.sin(lonDelta / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }, [currentLocation]);
+  const filtered = useMemo(() => listings
+    .filter((item) => item.isActive && (category === 'All' || item.category === category) && item.title.toLowerCase().includes(query.toLowerCase()))
+    .map((listing) => ({ listing, distance: distanceInKm(listing.latitude, listing.longitude) }))
+    .filter(({ distance }) => !nearbyOnly || (distance != null && distance <= 100))
+    .sort((a, b) => (a.distance ?? Number.POSITIVE_INFINITY) - (b.distance ?? Number.POSITIVE_INFINITY)), [category, distanceInKm, listings, nearbyOnly, query]);
+
+  const useLocation = async () => {
+    try {
+      await refreshCurrentLocation();
+    } catch (error) {
+      Alert.alert('Location unavailable', error instanceof Error ? error.message : 'Unable to determine your location.');
+    }
+  };
 
   return (
     <Screen>
@@ -29,7 +50,19 @@ export default function CustomerHome() {
         <Text style={styles.subheading}>Buy fresh produce and equipment directly from local farms.</Text>
         <View style={styles.search}><Ionicons name="search-outline" size={20} color={Colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search products, equipment or farms" placeholderTextColor={Colors.muted} style={styles.searchInput} /></View>
       </Section>
-      <View style={styles.list}>{filtered.map((listing) => <ListingCard key={listing.id} listing={listing} />)}</View>
+      <Section title="Nearby farms" action={currentLocation ? <Text style={styles.locationReady}><Ionicons name="checkmark-circle" size={14} /> GPS on</Text> : undefined}>
+        <Text style={styles.subheading}>{currentLocation?.label ? `Using your location near ${currentLocation.label}.` : 'Turn on location to sort listings by distance and find farms around you.'}</Text>
+        <View style={styles.locationActions}><Button variant="soft" disabled={locationLoading} onPress={useLocation}>{locationLoading ? 'Finding you…' : currentLocation ? 'Refresh my location' : 'Use my location'}</Button><Button variant={nearbyOnly ? 'primary' : 'outline'} disabled={!currentLocation} onPress={() => setNearbyOnly((value) => !value)}>{nearbyOnly ? 'Nearby only' : 'Show nearby'}</Button></View>
+        {locationError ? <Text style={styles.locationError}>{locationError}</Text> : null}
+      </Section>
+      <View style={styles.list}>
+        {filtered.map(({ listing, distance }) => (
+          <ListingCard key={listing.id} listing={listing} distanceKm={distance} />
+        ))}
+        {filtered.length === 0 ? (
+          <Text style={styles.empty}>No listings match this search. Try widening the area or changing your filters.</Text>
+        ) : null}
+      </View>
       <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label={`Cart${cart.length ? ` (${cart.length})` : ''}`} onPress={() => router.push('/cart')} /><View style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></View><NavItem icon="receipt-outline" label="Orders" onPress={() => router.push('/orders')} /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
     </Screen>
   );
@@ -58,4 +91,8 @@ const styles = StyleSheet.create({
   navLabel: { color: Colors.inkSoft, fontSize: 11, fontWeight: '700' },
   favorite: { width: 58, height: 58, marginTop: -28, borderRadius: 29, backgroundColor: Colors.green, borderWidth: 5, borderColor: Colors.canvas, alignItems: 'center', justifyContent: 'center' },
   favoriteText: { color: Colors.lime, fontSize: 24 },
+  locationActions: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  locationReady: { color: Colors.green, fontWeight: '800' },
+  locationError: { color: Colors.red, fontSize: 13 },
+  empty: { color: Colors.muted, textAlign: 'center', paddingVertical: Spacing.lg },
 });

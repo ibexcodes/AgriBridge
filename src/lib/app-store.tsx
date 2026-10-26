@@ -1,8 +1,9 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { ImageSourcePropType } from 'react-native';
+import * as Location from 'expo-location';
 
 import { requireSupabase, supabase } from './supabase';
-import { Chat, Listing, Order, Profile } from './types';
+import { Chat, Listing, Order, Profile, UserLocation } from './types';
 
 type AppStore = {
   listings: Listing[];
@@ -11,6 +12,10 @@ type AppStore = {
   favoriteIds: string[];
   chats: Chat[];
   profile: Profile;
+  currentLocation: UserLocation | null;
+  locationLoading: boolean;
+  locationError: string | null;
+  refreshCurrentLocation: () => Promise<UserLocation>;
   loading: boolean;
   error: string | null;
   userId: string | null;
@@ -57,6 +62,9 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [profile, setProfile] = useState(emptyProfile);
+  const [currentLocation, setCurrentLocation] = useState<UserLocation | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(supabase));
   const [error, setError] = useState<string | null>(supabase ? null : 'Supabase is not configured.');
@@ -95,11 +103,12 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         setChats([]);
         setFavoriteIds([]);
         setProfile(emptyProfile);
+        setCurrentLocation(null);
         return;
       }
 
       const [profileResult, orderResult, conversationResult, favoriteResult] = await Promise.all([
-        client.from('profiles').select('full_name,location').eq('id', id).maybeSingle(),
+        client.from('profiles').select('full_name,location,latitude,longitude').eq('id', id).maybeSingle(),
         client.from('orders').select('id,listing_id,total_amount,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
         client.from('conversations').select('id,listing_id,customer_id,farmer_id,listings(title)').or(`customer_id.eq.${id},farmer_id.eq.${id}`),
         client.from('favorites').select('listing_id').eq('user_id', id),
@@ -107,7 +116,21 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       if (profileResult.error) throw profileResult.error;
       if (orderResult.error) throw orderResult.error;
       if (conversationResult.error) throw conversationResult.error;
-      setProfile(profileResult.data ? { name: profileResult.data.full_name, location: profileResult.data.location ?? '', farm: profileResult.data.full_name } : emptyProfile);
+      setProfile(profileResult.data ? {
+        name: profileResult.data.full_name,
+        location: profileResult.data.location ?? '',
+        farm: profileResult.data.full_name,
+        latitude: profileResult.data.latitude ?? undefined,
+        longitude: profileResult.data.longitude ?? undefined,
+      } : emptyProfile);
+      if (profileResult.data?.latitude != null && profileResult.data?.longitude != null) {
+        setCurrentLocation({
+          latitude: profileResult.data.latitude,
+          longitude: profileResult.data.longitude,
+          updatedAt: new Date().toISOString(),
+          label: profileResult.data.location ?? undefined,
+        });
+      }
         setOrders((orderResult.data ?? []).map((row) => ({
         id: row.id,
         listingId: row.listing_id,
@@ -169,6 +192,9 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     loading,
     error,
     userId,
+    currentLocation,
+    locationLoading,
+    locationError,
     toggleListing: async (id) => {
       const client = requireSupabase();
       const listing = listings.find((item) => item.id === id);
@@ -223,6 +249,60 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       setCart((current) => current.filter((item) => item.id !== listingId));
       await load(userId);
     },
+    refreshCurrentLocation: async () => {
+      if (!userId) throw new Error('Sign in before using nearby discovery.');
+      setLocationLoading(true);
+      setLocationError(null);
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!permission.granted) {
+          throw new Error('Location permission was denied. Enable location access in Settings to use nearby discovery.');
+        }
+        if (!(await Location.hasServicesEnabledAsync())) {
+          throw new Error('Location services are turned off. Turn on GPS and try again.');
+        }
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const nextLocation: UserLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy ?? undefined,
+          updatedAt: new Date().toISOString(),
+        };
+        try {
+          const places = await Location.reverseGeocodeAsync({
+            latitude: nextLocation.latitude,
+            longitude: nextLocation.longitude,
+          });
+          const place = places[0];
+          nextLocation.label = [place?.city, place?.district, place?.region].filter(Boolean).join(', ') || undefined;
+        } catch (geocodeError) {
+          console.warn('Reverse geocoding unavailable:', geocodeError);
+        }
+        const nextProfile = {
+          ...profile,
+          location: nextLocation.label || profile.location,
+          latitude: nextLocation.latitude,
+          longitude: nextLocation.longitude,
+        };
+        const result = await requireSupabase().from('profiles').update({
+          location: nextProfile.location,
+          latitude: nextLocation.latitude,
+          longitude: nextLocation.longitude,
+        }).eq('id', userId);
+        if (result.error) throw result.error;
+        setProfile(nextProfile);
+        setCurrentLocation(nextLocation);
+        return nextLocation;
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : 'Unable to determine your location.';
+        setLocationError(message);
+        throw new Error(message);
+      } finally {
+        setLocationLoading(false);
+      }
+    },
     toggleFavorite: async (listingId) => {
       if (!userId) throw new Error('Sign in as a customer to save favourites.');
       const client = requireSupabase();
@@ -260,7 +340,13 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     },
     saveProfile: async (nextProfile) => {
       if (!userId) throw new Error('Sign in before updating your profile.');
-      const result = await requireSupabase().from('profiles').update({ full_name: nextProfile.name || nextProfile.farm, farm_name: nextProfile.farm, location: nextProfile.location }).eq('id', userId);
+      const result = await requireSupabase().from('profiles').update({
+        full_name: nextProfile.name || nextProfile.farm,
+        farm_name: nextProfile.farm,
+        location: nextProfile.location,
+        latitude: nextProfile.latitude ?? null,
+        longitude: nextProfile.longitude ?? null,
+      }).eq('id', userId);
       if (result.error) throw result.error;
       setProfile(nextProfile);
     },
@@ -289,8 +375,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         listing_mode: listing.mode,
         is_active: true,
         image_url: imageUrl,
-        latitude: listing.latitude ?? null,
-        longitude: listing.longitude ?? null,
+        latitude: listing.latitude ?? profile.latitude ?? null,
+        longitude: listing.longitude ?? profile.longitude ?? null,
       });
       if (result.error) throw result.error;
       await load(userId);
@@ -299,7 +385,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       const result = await requireSupabase().auth.signOut();
       if (result.error) throw result.error;
     },
-  }), [listings, orders, cart, favoriteIds, chats, profile, loading, error, userId]);
+  }), [listings, orders, cart, favoriteIds, chats, profile, loading, error, userId, currentLocation, locationLoading, locationError]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

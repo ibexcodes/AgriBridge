@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 
 import { Button, Card, Field, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -10,14 +9,13 @@ import { useAppStore } from '@/lib/app-store';
 import { Category, ListingMode } from '@/lib/types';
 
 export default function NewListingScreen() {
-  const { addListing } = useAppStore();
+  const { addListing, currentLocation, refreshCurrentLocation } = useAppStore();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Fresh produce');
   const [mode, setMode] = useState<ListingMode>('sell');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const valid = Boolean(title.trim() && description.trim() && Number(price) > 0);
 
   const takePhoto = async () => {
@@ -52,12 +50,14 @@ export default function NewListingScreen() {
 
   const publish = async () => {
     try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      let listingCoordinates = coordinates;
-      if (permission.granted) {
-        const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        listingCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
-        setCoordinates(listingCoordinates);
+      let listingCoordinates = currentLocation;
+      if (!listingCoordinates) {
+        try {
+          listingCoordinates = await refreshCurrentLocation();
+        } catch (locationError) {
+          Alert.alert('GPS location required', locationError instanceof Error ? locationError.message : 'Enable location access before publishing this listing.');
+          return;
+        }
       }
       await addListing({
         id: `listing-${Date.now()}`,

@@ -48,4 +48,14 @@ export type Profile = {
   name: string;
   location: string;
   farm: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type UserLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  updatedAt: string;
+  label?: string;
 };

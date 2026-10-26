@@ -6,7 +6,7 @@ import { Listing } from '@/lib/types';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAppStore } from '@/lib/app-store';
 
-export function ListingCard({ listing }: { listing: Listing }) {
+export function ListingCard({ listing, distanceKm }: { listing: Listing; distanceKm?: number }) {
   const { favoriteIds, toggleFavorite } = useAppStore();
   const isFavorite = favoriteIds.includes(listing.id);
   return (
@@ -27,7 +27,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <Text style={styles.title}>{listing.title}</Text>
         <Text style={styles.unit}>{listing.unit}</Text>
         <Text style={styles.price}>BWP {listing.price.toFixed(2)}</Text>
-        <View style={styles.meta}><Text style={styles.muted}>⌖ {listing.location}</Text><Text style={styles.muted}>{listing.mode === 'rent' ? 'For rent' : 'For sale'}</Text></View>
+        <View style={styles.meta}><Text style={styles.muted}><Ionicons name="location-outline" size={14} color={Colors.inkSoft} /> {distanceKm == null ? listing.location : `${distanceKm.toFixed(1)} km away`}</Text><Text style={styles.muted}>{listing.mode === 'rent' ? 'For rent' : 'For sale'}</Text></View>
       </View>
     </Pressable>
   );
