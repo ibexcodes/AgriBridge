@@ -12,14 +12,20 @@ export async function openGoogleMapsDirections(latitude?: number, longitude?: nu
     : `google.navigation:q=${destination}`;
   const fallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
 
-  if (await Linking.canOpenURL(nativeUrl)) {
-    await Linking.openURL(nativeUrl);
-    return;
+  try {
+    if (await Linking.canOpenURL(nativeUrl)) {
+      await Linking.openURL(nativeUrl);
+      return;
+    }
+  } catch (error) {
+    console.warn('Native Google Maps deep link unavailable:', error);
   }
 
-  if (await Linking.canOpenURL(fallbackUrl)) {
+  try {
     await Linking.openURL(fallbackUrl);
     return;
+  } catch (error) {
+    console.warn('Google Maps web directions unavailable:', error);
   }
 
   Alert.alert('Google Maps unavailable', 'Install Google Maps or enable a supported maps application on this device.');
