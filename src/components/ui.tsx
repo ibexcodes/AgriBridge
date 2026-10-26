@@ -7,7 +7,7 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 let styles: ReturnType<typeof StyleSheet.create>;
 
 export function Screen({ children, scroll = true }: PropsWithChildren<{ scroll?: boolean }>) {
-  const content = <View style={styles.content}>{children}</View>;
+  const content = <View style={[styles.content, !scroll && styles.flexContent]}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {scroll ? <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>{content}</ScrollView> : content}
@@ -109,6 +109,7 @@ styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.canvas },
   scroll: { flex: 1 },
   content: { width: '100%', maxWidth: 680, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.lg, paddingBottom: 120 },
+  flexContent: { flex: 1 },
   heading: { gap: Spacing.xs },
   eyebrow: { color: Colors.green, fontWeight: '800', fontSize: 13, letterSpacing: 0.8, textTransform: 'uppercase' },
   title: { color: Colors.ink, fontSize: 34, lineHeight: 40, fontWeight: '800', letterSpacing: -1 },
