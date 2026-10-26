@@ -22,7 +22,7 @@ export default function CustomerHome() {
       <View style={styles.header}><View><Text style={styles.greeting}>{profile.name}</Text><Text style={styles.welcome}>Good morning, welcome back</Text></View><Pressable style={styles.bell} onPress={() => router.push('/messages')}><Ionicons name="notifications-outline" size={22} color="#fff" /></Pressable></View>
       <Section title="Explore categories" action={<Text style={styles.seeAll}>See all</Text>}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {categories.map((item) => <Chip key={item} active={category === item} onPress={() => setCategory(item)}>{item === 'Fresh produce' ? '◉  Fresh produce' : item === 'Machinery' ? '⚙  Machinery' : item === 'Fertilizer' ? '✦  Fertilizer' : '✦  All'}</Chip>)}
+          {categories.map((item) => <Chip key={item} active={category === item} onPress={() => setCategory(item)}><View style={styles.chipContent}><Ionicons name={item === 'Fresh produce' ? 'leaf-outline' : item === 'Machinery' ? 'construct-outline' : item === 'Fertilizer' ? 'flask-outline' : 'grid-outline'} size={15} color={category === item ? '#fff' : Colors.inkSoft} /><Text style={[styles.chipLabel, category === item && styles.activeChipLabel]}>{item}</Text></View></Chip>)}
         </ScrollView>
       </Section>
       <Section title="Browse farm products">
@@ -30,7 +30,7 @@ export default function CustomerHome() {
         <View style={styles.search}><Ionicons name="search-outline" size={20} color={Colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search products, equipment or farms" placeholderTextColor={Colors.muted} style={styles.searchInput} /></View>
       </Section>
       <View style={styles.list}>{filtered.map((listing) => <ListingCard key={listing.id} listing={listing} />)}</View>
-      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label="Cart" /><View style={styles.favorite}><Text>♥</Text></View><NavItem icon="receipt-outline" label="Orders" /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
+      <View style={styles.nav}><NavItem icon="chatbubble-ellipses-outline" label="Messages" onPress={() => router.push('/messages')} /><NavItem icon="cart-outline" label="Cart" /><View style={styles.favorite}><Ionicons name="heart" size={24} color={Colors.lime} /></View><NavItem icon="receipt-outline" label="Orders" /><NavItem icon="person-outline" label="Profile" onPress={() => router.push('/profile')} /></View>
     </Screen>
   );
 }
@@ -46,6 +46,9 @@ const styles = StyleSheet.create({
   bell: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' },
   seeAll: { color: Colors.green, fontWeight: '800' },
   chips: { gap: Spacing.sm },
+  chipContent: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipLabel: { color: Colors.inkSoft, fontWeight: '700', fontSize: 14 },
+  activeChipLabel: { color: '#fff' },
   subheading: { color: Colors.inkSoft, lineHeight: 22, marginTop: -6 },
   search: { height: 58, borderRadius: Radius.md, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.line, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, gap: 10 },
   searchInput: { flex: 1, color: Colors.ink, fontSize: 15 },

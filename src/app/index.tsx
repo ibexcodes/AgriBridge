@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -89,7 +90,7 @@ export default function WelcomeScreen() {
             <View style={styles.scrim} />
             <View style={[styles.slideContent, contentPadding]}>
               <View style={styles.topRow}>
-                {activeIndex > 0 ? <Pressable hitSlop={10} onPress={() => goToSlide(activeIndex - 1)} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.backPlaceholder} />}
+                {activeIndex > 0 ? <Pressable accessibilityLabel="Previous slide" hitSlop={10} onPress={() => goToSlide(activeIndex - 1)} style={styles.back}><Ionicons name="chevron-back" size={24} color="#fff" /></Pressable> : <View style={styles.backPlaceholder} />}
                 <Pressable hitSlop={10} onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
               </View>
               <View style={styles.copy}>
@@ -129,7 +130,6 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.28)', alignItems: 'center', justifyContent: 'center' },
   backPlaceholder: { width: 42, height: 42 },
-  backText: { color: '#fff', fontSize: 32, lineHeight: 34, marginTop: -4 },
   skip: { color: '#fff', fontWeight: '800', fontSize: 15 },
   copy: { gap: Spacing.md, flexShrink: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   progress: { flexDirection: 'row', alignItems: 'center', gap: 6 },
