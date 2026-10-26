@@ -78,7 +78,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       const client = requireSupabase();
       const listingResult = await client
         .from('listings')
-        .select('*, profiles:farmer_id(full_name,location)')
+        .select('*, profiles:farmer_id(full_name,location,latitude,longitude)')
         .order('created_at', { ascending: false });
       if (listingResult.error) throw listingResult.error;
       setListings((listingResult.data ?? []).map((row) => ({
@@ -96,8 +96,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         quantity: row.quantity || 'Available now',
         isActive: row.is_active,
         farmerId: row.farmer_id,
-        latitude: row.latitude ?? undefined,
-        longitude: row.longitude ?? undefined,
+        latitude: row.latitude ?? relatedRow(row.profiles)?.latitude ?? undefined,
+        longitude: row.longitude ?? relatedRow(row.profiles)?.longitude ?? undefined,
       })));
 
       if (!id) {
