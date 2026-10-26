@@ -1,6 +1,7 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { ImageSourcePropType } from 'react-native';
 import * as Location from 'expo-location';
+import { File } from 'expo-file-system';
 
 import { requireSupabase, supabase } from './supabase';
 import { Chat, DeliveryStatus, FulfillmentMethod, Listing, Order, Profile, UserLocation } from './types';
@@ -392,10 +393,9 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       let imageUrl: string | null = null;
       const localImage = listing.image && typeof listing.image === 'object' && 'uri' in listing.image ? listing.image.uri : null;
       if (localImage) {
-        const imageResponse = await fetch(localImage);
-        if (!imageResponse.ok) throw new Error('Unable to read the selected listing photo.');
-        const imageData = await imageResponse.arrayBuffer();
-        const extension = localImage.split('?')[0].split('.').pop()?.toLowerCase();
+        const imageFile = new File(localImage);
+        const imageData = await imageFile.arrayBuffer();
+        const extension = imageFile.extension.replace('.', '').toLowerCase();
         const contentType = extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : 'image/jpeg';
         const path = `${userId}/${Date.now()}.${extension === 'png' || extension === 'webp' ? extension : 'jpg'}`;
         const storage = requireSupabase().storage.from('listing-images');
