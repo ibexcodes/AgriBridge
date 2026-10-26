@@ -39,7 +39,7 @@ type AppStore = {
   signOut: () => Promise<void>;
 };
 
-const emptyProfile: Profile = { name: '', location: '', farm: '' };
+const emptyProfile: Profile = { name: '', location: '', farm: '', role: 'customer' };
 const StoreContext = createContext<AppStore | null>(null);
 const relatedRow = <T,>(value: T | T[] | null | undefined): T | null => Array.isArray(value) ? value[0] ?? null : value ?? null;
 
@@ -110,7 +110,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       }
 
       const [profileResult, orderResult, conversationResult, favoriteResult] = await Promise.all([
-        client.from('profiles').select('full_name,location,latitude,longitude').eq('id', id).maybeSingle(),
+        client.from('profiles').select('full_name,farm_name,role,location,latitude,longitude').eq('id', id).maybeSingle(),
         client.from('orders').select('id,listing_id,total_amount,item_amount,delivery_fee,fulfillment_method,delivery_area,delivery_status,buyer_latitude,buyer_longitude,farmer_latitude,farmer_longitude,delivery_updated_at,status,created_at,listings(title),profiles:buyer_id(full_name)').order('created_at', { ascending: false }),
         client.from('conversations').select('id,listing_id,customer_id,farmer_id,listings(title)').or(`customer_id.eq.${id},farmer_id.eq.${id}`),
         client.from('favorites').select('listing_id').eq('user_id', id),
@@ -121,7 +121,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       setProfile(profileResult.data ? {
         name: profileResult.data.full_name,
         location: profileResult.data.location ?? '',
-        farm: profileResult.data.full_name,
+        farm: profileResult.data.farm_name ?? profileResult.data.full_name,
+        role: profileResult.data.role ?? 'customer',
         latitude: profileResult.data.latitude ?? undefined,
         longitude: profileResult.data.longitude ?? undefined,
       } : emptyProfile);
@@ -377,7 +378,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       if (!userId) throw new Error('Sign in before updating your profile.');
       const result = await requireSupabase().from('profiles').update({
         full_name: nextProfile.name || nextProfile.farm,
-        farm_name: nextProfile.farm,
+        farm_name: nextProfile.role === 'farmer' ? nextProfile.farm : null,
         location: nextProfile.location,
         latitude: nextProfile.latitude ?? null,
         longitude: nextProfile.longitude ?? null,

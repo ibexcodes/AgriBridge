@@ -60,6 +60,7 @@ export type Profile = {
   name: string;
   location: string;
   farm: string;
+  role?: Role;
   latitude?: number;
   longitude?: number;
 };
