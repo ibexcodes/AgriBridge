@@ -40,16 +40,19 @@ export default function CustomerHome() {
 
   return (
     <Screen>
-      <View style={styles.header}><View><Text style={styles.greeting}>{profile.name}</Text><Text style={styles.welcome}>Good morning, welcome back</Text></View><Pressable style={styles.bell} onPress={() => router.push('/messages')}><Ionicons name="notifications-outline" size={22} color="#fff" /></Pressable></View>
-      <Section title="Explore categories" action={<Text style={styles.seeAll}>See all</Text>}>
+      <View style={styles.header}><View style={styles.headerCopy}><Text style={styles.greeting} numberOfLines={1}>{profile.name || 'Welcome back'}</Text><Text style={styles.welcome}>Good morning, welcome back</Text></View><Pressable accessibilityLabel="Open messages and notifications" style={styles.bell} onPress={() => router.push('/messages')}><Ionicons name="notifications-outline" size={22} color="#fff" /></Pressable></View>
+      <View style={styles.topPanel}>
+      <Section title="Explore categories">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {categories.map((item) => <Chip key={item} active={category === item} onPress={() => setCategory(item)}><View style={styles.chipContent}><Ionicons name={item === 'Fresh produce' ? 'leaf-outline' : item === 'Machinery' ? 'construct-outline' : item === 'Fertilizer' ? 'flask-outline' : 'grid-outline'} size={15} color={category === item ? '#fff' : Colors.inkSoft} /><Text style={[styles.chipLabel, category === item && styles.activeChipLabel]}>{item}</Text></View></Chip>)}
         </ScrollView>
       </Section>
-      <Section title="Browse farm products">
+      <View style={styles.browseBlock}>
+        <Text style={styles.browseTitle}>Browse farm products</Text>
         <Text style={styles.subheading}>Buy fresh produce and equipment directly from local farms.</Text>
         <View style={styles.search}><Ionicons name="search-outline" size={20} color={Colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search products, equipment or farms" placeholderTextColor={Colors.muted} style={styles.searchInput} /></View>
-      </Section>
+      </View>
+      </View>
       <Section title="Nearby farms" action={currentLocation ? <Text style={styles.locationReady}><Ionicons name="checkmark-circle" size={14} /> GPS on</Text> : undefined}>
         <Text style={styles.subheading}>{currentLocation?.label ? `Using your location near ${currentLocation.label}.` : 'Turn on location to sort listings by distance and find farms around you.'}</Text>
         <View style={styles.locationActions}><Button variant="soft" disabled={locationLoading} onPress={useLocation}>{locationLoading ? 'Finding you…' : currentLocation ? 'Refresh my location' : 'Use my location'}</Button><Button variant={nearbyOnly ? 'primary' : 'outline'} disabled={!currentLocation} onPress={() => setNearbyOnly((value) => !value)}>{nearbyOnly ? 'Nearby only' : 'Show nearby'}</Button></View>
@@ -73,11 +76,14 @@ function NavItem({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMa
 }
 
 const styles = StyleSheet.create({
-  header: { backgroundColor: Colors.green, marginHorizontal: -Spacing.lg, marginTop: -Spacing.lg, padding: Spacing.lg, paddingTop: 22, paddingBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { backgroundColor: Colors.green, borderRadius: Radius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, minHeight: 92, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.md },
+  headerCopy: { flex: 1, minWidth: 0, gap: 5 },
   greeting: { color: Colors.lime, fontSize: 15, fontWeight: '800' },
-  welcome: { color: '#fff', fontSize: 17, marginTop: 6 },
+  welcome: { color: '#fff', fontSize: 17, lineHeight: 22 },
   bell: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' },
-  seeAll: { color: Colors.green, fontWeight: '800' },
+  topPanel: { backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: Spacing.md, borderWidth: 1, borderColor: Colors.line, gap: Spacing.lg },
+  browseBlock: { gap: Spacing.sm },
+  browseTitle: { color: Colors.ink, fontSize: 21, fontWeight: '800', letterSpacing: -0.3 },
   chips: { gap: Spacing.sm },
   chipContent: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipLabel: { color: Colors.inkSoft, fontWeight: '700', fontSize: 14 },
