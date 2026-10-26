@@ -169,13 +169,9 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       await load(userId);
     },
     deleteArchivedListing: async (id) => {
-      const client = requireSupabase();
-      const orderResult = await client.from('orders').select('id', { count: 'exact', head: true }).eq('listing_id', id);
-      if (orderResult.error) throw orderResult.error;
-      if ((orderResult.count ?? 0) > 0) {
-        throw new Error('This archived listing cannot be deleted because it has order history.');
-      }
-      const result = await client.from('listings').delete().eq('id', id).eq('is_active', false);
+      const result = await requireSupabase().rpc('delete_archived_listing', {
+        p_listing_id: id,
+      });
       if (result.error) throw result.error;
       await load(userId);
     },

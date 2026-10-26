@@ -9,7 +9,7 @@ import { useAppStore } from '@/lib/app-store';
 export default function FarmerDashboard() {
   const { listings, orders, chats, profile, toggleListing, removeListing, deleteArchivedListing, approveOrder, cancelOrder, completeOrder } = useAppStore();
   const deleteArchived = (id: string) => {
-    Alert.alert('Delete archived listing?', 'This permanently removes the listing if it has no order history.', [
+    Alert.alert('Delete archived listing?', 'This permanently removes the listing and its cancelled order history. Active order history is protected.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
