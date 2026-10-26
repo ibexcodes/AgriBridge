@@ -1,4 +1,4 @@
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -6,21 +6,10 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Card, Screen } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAppStore } from '@/lib/app-store';
+import { openGoogleMapsDirections } from '@/lib/maps';
 
 export default function OrdersScreen() {
   const { orders, cancelOrder } = useAppStore();
-  const openDirections = async (latitude?: number, longitude?: number) => {
-    if (latitude == null || longitude == null) {
-      Alert.alert('Location unavailable', 'The farmer has not shared a map location yet.');
-      return;
-    }
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
-    if (!(await Linking.canOpenURL(url))) {
-      Alert.alert('Maps unavailable', 'No maps application is available on this device.');
-      return;
-    }
-    await Linking.openURL(url);
-  };
   const cancel = (id: string) => {
     Alert.alert('Cancel order request?', 'The farmer will be notified and this request will remain in your order history.', [
       { text: 'Keep order', style: 'cancel' },
@@ -64,7 +53,7 @@ export default function OrdersScreen() {
                       {order.farmerLatitude != null && order.farmerLongitude != null ? <Polyline coordinates={[{ latitude: order.buyerLatitude, longitude: order.buyerLongitude }, { latitude: order.farmerLatitude, longitude: order.farmerLongitude }]} strokeColor={Colors.green} strokeWidth={3} /> : null}
                     </MapView>
                   ) : null}
-                  <Pressable style={styles.directionButton} onPress={() => void openDirections(order.farmerLatitude, order.farmerLongitude)}>
+                  <Pressable style={styles.directionButton} onPress={() => void openGoogleMapsDirections(order.farmerLatitude, order.farmerLongitude, 'farmer')}>
                     <Ionicons name="navigate-outline" size={18} color={Colors.green} />
                     <Text style={styles.directionText}>Get directions to farmer</Text>
                   </Pressable>
@@ -73,7 +62,7 @@ export default function OrdersScreen() {
                 <>
                   <Text style={styles.muted}>Pickup · No delivery fee</Text>
                   {order.farmerLatitude != null && order.farmerLongitude != null ? (
-                    <Pressable style={styles.directionButton} onPress={() => void openDirections(order.farmerLatitude, order.farmerLongitude)}>
+                    <Pressable style={styles.directionButton} onPress={() => void openGoogleMapsDirections(order.farmerLatitude, order.farmerLongitude, 'farmer pickup')}>
                       <Ionicons name="navigate-outline" size={18} color={Colors.green} />
                       <Text style={styles.directionText}>Navigate to pickup</Text>
                     </Pressable>
