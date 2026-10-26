@@ -185,7 +185,9 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       await load(userId);
     },
     cancelOrder: async (id) => {
-      const result = await requireSupabase().from('orders').update({ status: 'cancelled' }).eq('id', id);
+      const result = await requireSupabase().rpc('cancel_marketplace_order', {
+        p_order_id: id,
+      });
       if (result.error) throw result.error;
       await load(userId);
     },
