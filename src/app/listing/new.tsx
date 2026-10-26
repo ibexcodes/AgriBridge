@@ -6,12 +6,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { Button, Card, Field, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAppStore } from '@/lib/app-store';
-import { Category } from '@/lib/types';
+import { Category, ListingMode } from '@/lib/types';
 
 export default function NewListingScreen() {
   const { addListing } = useAppStore();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Fresh produce');
+  const [mode, setMode] = useState<ListingMode>('sell');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function NewListingScreen() {
         category,
         description,
         price: Number(price),
-        unit: category === 'Machinery' ? 'per day' : 'per unit',
+        unit: category === 'Machinery' && mode === 'rent' ? 'per day' : 'per unit',
         location: 'Mahalapye',
         farmer: 'Johanson Sebudi',
         farm: "Johanson's farm",
@@ -66,7 +67,7 @@ export default function NewListingScreen() {
             : category === 'Fertilizer'
               ? require('@/assets/agribridge/onboarding-fertilizer.jpg')
               : require('@/assets/agribridge/onboarding-produce.jpg'),
-        mode: category === 'Machinery' ? 'rent' : 'sell',
+        mode: category === 'Machinery' ? mode : 'sell',
         quantity: 'Available now',
         isActive: true,
       });
@@ -94,11 +95,23 @@ export default function NewListingScreen() {
         <Text style={styles.label}>Category</Text>
         <View style={styles.categories}>
           {(['Fresh produce', 'Machinery', 'Fertilizer'] as Category[]).map((item) => (
-            <Pressable key={item} onPress={() => setCategory(item)} style={[styles.category, category === item && styles.activeCategory]}>
+            <Pressable key={item} onPress={() => { setCategory(item); if (item !== 'Machinery') setMode('sell'); }} style={[styles.category, category === item && styles.activeCategory]}>
               <Text style={[styles.categoryText, category === item && styles.activeText]}>{item}</Text>
             </Pressable>
           ))}
         </View>
+        {category === 'Machinery' ? (
+          <>
+            <Text style={styles.label}>Offer type</Text>
+            <View style={styles.categories}>
+              {(['sell', 'rent'] as ListingMode[]).map((item) => (
+                <Pressable key={item} onPress={() => setMode(item)} style={[styles.category, mode === item && styles.activeCategory]}>
+                  <Text style={[styles.categoryText, mode === item && styles.activeText]}>{item === 'sell' ? 'For sale' : 'For rent'}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
         <Field label="Description" value={description} onChangeText={setDescription} placeholder="Describe quality, availability and collection details" multiline />
         <Field label="Price (BWP)" value={price} onChangeText={setPrice} placeholder="450" keyboardType="decimal-pad" />
         <Button disabled={!valid} onPress={publish}>Publish listing</Button>
