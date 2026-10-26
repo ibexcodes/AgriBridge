@@ -393,14 +393,18 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       const localImage = listing.image && typeof listing.image === 'object' && 'uri' in listing.image ? listing.image.uri : null;
       if (localImage) {
         const imageResponse = await fetch(localImage);
-        const imageBlob = await imageResponse.blob();
-        const path = `${userId}/${Date.now()}.jpg`;
-        const upload = await requireSupabase().storage.from('listing-images').upload(path, imageBlob, {
-          contentType: imageBlob.type || 'image/jpeg',
+        if (!imageResponse.ok) throw new Error('Unable to read the selected listing photo.');
+        const imageData = await imageResponse.arrayBuffer();
+        const extension = localImage.split('?')[0].split('.').pop()?.toLowerCase();
+        const contentType = extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : 'image/jpeg';
+        const path = `${userId}/${Date.now()}.${extension === 'png' || extension === 'webp' ? extension : 'jpg'}`;
+        const storage = requireSupabase().storage.from('listing-images');
+        const upload = await storage.upload(path, imageData, {
+          contentType,
           upsert: false,
         });
         if (upload.error) throw upload.error;
-        imageUrl = path;
+        imageUrl = storage.getPublicUrl(path).data.publicUrl;
       }
       const result = await requireSupabase().from('listings').insert({
         farmer_id: userId,
