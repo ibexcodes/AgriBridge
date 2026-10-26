@@ -15,6 +15,7 @@ type AppStore = {
   userId: string | null;
   toggleListing: (id: string) => Promise<void>;
   removeListing: (id: string) => Promise<void>;
+  deleteArchivedListing: (id: string) => Promise<void>;
   approveOrder: (id: string) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
   completeOrder: (id: string) => Promise<void>;
@@ -164,6 +165,17 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     removeListing: async (id) => {
       // Archive listings instead of deleting them so historical orders retain their reference.
       const result = await requireSupabase().from('listings').update({ is_active: false }).eq('id', id);
+      if (result.error) throw result.error;
+      await load(userId);
+    },
+    deleteArchivedListing: async (id) => {
+      const client = requireSupabase();
+      const orderResult = await client.from('orders').select('id', { count: 'exact', head: true }).eq('listing_id', id);
+      if (orderResult.error) throw orderResult.error;
+      if ((orderResult.count ?? 0) > 0) {
+        throw new Error('This archived listing cannot be deleted because it has order history.');
+      }
+      const result = await client.from('listings').delete().eq('id', id).eq('is_active', false);
       if (result.error) throw result.error;
       await load(userId);
     },
