@@ -20,8 +20,13 @@ const slides = [
   },
   {
     image: require('@/assets/agribridge/onboarding-machinery.jpg'),
-    title: 'Everything Your Farm\nNeeds',
-    body: 'Discover tractors, farming machinery, tools, and essential equipment to help prepare land, tend crops, and work more efficiently.',
+    title: 'Power Your Farm\nForward',
+    body: 'Find reliable tractors, machinery, and tools to prepare land, manage crops, and work more efficiently.',
+  },
+  {
+    image: require('@/assets/agribridge/onboarding-farmer.jpg'),
+    title: 'Grow More,\nTogether',
+    body: 'Connect with trusted farmers and suppliers, discover quality products, and take your farm further with AgriBridge.',
   },
 ];
 
