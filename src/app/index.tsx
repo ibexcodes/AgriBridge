@@ -38,7 +38,8 @@ export default function WelcomeScreen() {
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const horizontalPadding = Math.min(Spacing.lg, Math.max(20, width * 0.06));
-  const titleSize = Math.min(31, Math.max(26, width * 0.078));
+  const titleSize = Math.min(30, Math.max(25, width * 0.074));
+  const bodySize = width < 360 ? 13 : 14;
   const contentPadding = {
     paddingHorizontal: horizontalPadding,
     paddingTop: insets.top + 12,
@@ -97,8 +98,8 @@ export default function WelcomeScreen() {
                 <View style={styles.progress}>
                   {slides.map((_, index) => <View key={index} style={[styles.dot, index === activeIndex && styles.activeDot]} />)}
                 </View>
-                <Text style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>{item.title}</Text>
-                <Text style={styles.body}>{item.body}</Text>
+                <Text allowFontScaling={false} style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 5 }]}>{item.title}</Text>
+                <Text allowFontScaling={false} style={[styles.body, { fontSize: bodySize, lineHeight: bodySize + 7 }]}>{item.body}</Text>
               </View>
               <Pressable style={styles.button} onPress={() => activeIndex === slides.length - 1 ? router.replace('/role') : goToSlide(activeIndex + 1)}>
                 <Text style={styles.buttonText}>{activeIndex === slides.length - 1 ? 'Get Started' : 'Next'}</Text>
@@ -131,12 +132,12 @@ const styles = StyleSheet.create({
   back: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.28)', alignItems: 'center', justifyContent: 'center' },
   backPlaceholder: { width: 42, height: 42 },
   skip: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  copy: { gap: Spacing.md, flexShrink: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  copy: { gap: 12, flexShrink: 1, width: '100%', maxWidth: 520, alignSelf: 'center' },
   progress: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.8)' },
   activeDot: { width: 32, backgroundColor: Colors.lime },
-  title: { color: '#ffc928', fontWeight: '800', letterSpacing: -0.5, flexShrink: 1 },
-  body: { color: '#fff', fontSize: 14, lineHeight: 21, fontWeight: '600', flexShrink: 1 },
+  title: { color: '#ffc928', fontWeight: '800', letterSpacing: -0.35, flexShrink: 1, textAlign: 'left', textShadowColor: 'rgba(0,0,0,0.24)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
+  body: { color: '#fff', fontWeight: '600', flexShrink: 1, maxWidth: 480, textAlign: 'left', textShadowColor: 'rgba(0,0,0,0.28)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
   button: { width: '100%', maxWidth: 560, height: 58, borderRadius: Radius.md, backgroundColor: '#07835f', justifyContent: 'center', alignItems: 'center', alignSelf: 'center' },
   buttonText: { color: Colors.lime, fontSize: 16, fontWeight: '800' },
 });
