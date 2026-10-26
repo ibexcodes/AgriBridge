@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
@@ -27,6 +28,15 @@ export default function WelcomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<FlatList<(typeof slides)[number]>>(null);
+  const { height, width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const horizontalPadding = Math.min(Spacing.lg, Math.max(20, width * 0.06));
+  const titleSize = Math.min(31, Math.max(26, width * 0.078));
+  const contentPadding = {
+    paddingHorizontal: horizontalPadding,
+    paddingTop: insets.top + 12,
+    paddingBottom: Math.max(insets.bottom + 16, height < 700 ? 18 : 28),
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 1200);
@@ -57,22 +67,23 @@ export default function WelcomeScreen() {
         data={slides}
         horizontal
         pagingEnabled
+        bounces={false}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(_, index) => String(index)}
         renderItem={({ item }) => (
-          <View style={styles.slide}>
+          <View style={[styles.slide, { width }]}>
             <Image source={item.image} style={styles.image} resizeMode="cover" />
             <View style={styles.scrim} />
-            <View style={styles.slideContent}>
+            <View style={[styles.slideContent, contentPadding]}>
               <View style={styles.topRow}>
-                {activeIndex > 0 ? <Pressable onPress={() => goToSlide(activeIndex - 1)} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.backPlaceholder} />}
-                <Pressable onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
+                {activeIndex > 0 ? <Pressable hitSlop={10} onPress={() => goToSlide(activeIndex - 1)} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.backPlaceholder} />}
+                <Pressable hitSlop={10} onPress={() => router.replace('/role')}><Text style={styles.skip}>Skip</Text></Pressable>
               </View>
               <View style={styles.copy}>
                 <View style={styles.progress}>
                   {slides.map((_, index) => <View key={index} style={[styles.dot, index === activeIndex && styles.activeDot]} />)}
                 </View>
-                <Text style={styles.title}>{item.title}</Text>
+                <Text style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>{item.title}</Text>
                 <Text style={styles.body}>{item.body}</Text>
               </View>
               <Pressable style={styles.button} onPress={() => activeIndex === slides.length - 1 ? router.replace('/role') : goToSlide(activeIndex + 1)}>
@@ -92,27 +103,27 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  splash: { flex: 1, backgroundColor: '#f8f8f3', alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 250, height: 170 },
-  splashDots: { position: 'absolute', bottom: 190, flexDirection: 'row', gap: 7 },
+  splash: { flex: 1, backgroundColor: '#f8f8f3', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  logo: { width: '72%', maxWidth: 250, height: 170 },
+  splashDots: { position: 'absolute', bottom: '16%', flexDirection: 'row', gap: 7 },
   splashDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#79b34b' },
   splashDotActive: { backgroundColor: Colors.green },
   screen: { flex: 1, backgroundColor: Colors.greenDeep },
-  slide: { flex: 1, width: '100%' },
+  slide: { height: '100%' },
   image: StyleSheet.absoluteFill,
   scrim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.38)' },
-  slideContent: { flex: 1, padding: Spacing.lg, paddingTop: 50, paddingBottom: 34, justifyContent: 'space-between' },
+  slideContent: { flex: 1, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.28)', alignItems: 'center', justifyContent: 'center' },
   backPlaceholder: { width: 42, height: 42 },
   backText: { color: '#fff', fontSize: 32, lineHeight: 34, marginTop: -4 },
   skip: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  copy: { gap: Spacing.md },
+  copy: { gap: Spacing.md, flexShrink: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   progress: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.8)' },
   activeDot: { width: 32, backgroundColor: Colors.lime },
-  title: { color: '#ffc928', fontSize: 31, lineHeight: 35, fontWeight: '800', letterSpacing: -0.5 },
-  body: { color: '#fff', fontSize: 14, lineHeight: 21, fontWeight: '600' },
-  button: { height: 64, borderRadius: Radius.md, backgroundColor: '#07835f', justifyContent: 'center', alignItems: 'center' },
+  title: { color: '#ffc928', fontWeight: '800', letterSpacing: -0.5, flexShrink: 1 },
+  body: { color: '#fff', fontSize: 14, lineHeight: 21, fontWeight: '600', flexShrink: 1 },
+  button: { width: '100%', maxWidth: 560, height: 58, borderRadius: Radius.md, backgroundColor: '#07835f', justifyContent: 'center', alignItems: 'center', alignSelf: 'center' },
   buttonText: { color: Colors.lime, fontSize: 16, fontWeight: '800' },
 });
